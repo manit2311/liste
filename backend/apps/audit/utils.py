@@ -1,0 +1,47 @@
+from .models import AuditLog
+
+
+def _detect_device(request):
+    """Turn the browser's User-Agent into a friendly 'OS · Browser' label."""
+    if request is None:
+        return ""
+    ua = request.META.get("HTTP_USER_AGENT", "")
+
+    if "Windows" in ua:
+        os_name = "Windows"
+    elif "iPhone" in ua:
+        os_name = "iPhone"
+    elif "iPad" in ua:
+        os_name = "iPad"
+    elif "Android" in ua:
+        os_name = "Android"
+    elif "Mac OS" in ua or "Macintosh" in ua:
+        os_name = "Mac"
+    elif "Linux" in ua:
+        os_name = "Linux"
+    else:
+        os_name = "Unknown"
+
+    if "Edg/" in ua or "Edge/" in ua:
+        browser = "Edge"
+    elif "OPR/" in ua or "Opera" in ua:
+        browser = "Opera"
+    elif "Chrome/" in ua:
+        browser = "Chrome"
+    elif "Firefox/" in ua:
+        browser = "Firefox"
+    elif "Safari/" in ua:
+        browser = "Safari"
+    else:
+        browser = "Unknown"
+
+    return f"{os_name} · {browser}"
+
+
+def log_action(user, action, request=None):
+    """Write one permanent audit entry (with device info when request is provided)."""
+    AuditLog.objects.create(
+        user=user if getattr(user, "is_authenticated", False) else None,
+        action=action,
+        device=_detect_device(request),
+    )
