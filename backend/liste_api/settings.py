@@ -4,6 +4,9 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_URL = '/static/'
+
 SECRET_KEY = 'django-insecure-boyf+6*2oj^*)ci@!hpuag5l*d%s=+1f7puels_@p##&df(zlc'
 
 DEBUG = True
