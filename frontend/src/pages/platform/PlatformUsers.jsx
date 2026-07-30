@@ -30,7 +30,8 @@ export function PlatformUsers() {
   if (loading) return <h2>Loading...</h2>;
 
   const filtered = users.filter(u =>
-    u.username.toLowerCase().includes(search.toLowerCase())
+    u.username.toLowerCase().includes(search.toLowerCase()) ||
+    (u.company_name || "").toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -48,7 +49,7 @@ export function PlatformUsers() {
             <span className="search-icon">🔍</span>
             <input
               className="search-input"
-              placeholder="Search users…"
+              placeholder="Search users or company…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -78,8 +79,16 @@ export function PlatformUsers() {
                 <tr key={u.id}>
                   <td>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div className="avatar">{u.username[0].toUpperCase()}</div>
-                      <div style={{ fontWeight: 500, fontSize: 14 }}>{u.username}</div>
+                      <div className="avatar"
+                        style={{
+                          background: u.role === "super_admin" ? '#a82d68' :
+                            u.role === "admin" ? '#c9407f' : '#a87c9e'
+                        }}>
+                        {u.username[0].toUpperCase()}
+                      </div>
+                      <div style={{ fontWeight: 500, fontSize: 14 }}>
+                        {u.username}
+                      </div>
                     </div>
                   </td>
                   <td style={{ fontSize: 13 }}>{u.phone || "-"}</td>
@@ -91,11 +100,23 @@ export function PlatformUsers() {
                       {ROLE_LABELS[u.role] || u.role}
                     </span>
                   </td>
-                  <td style={{ fontSize: 13 }}>{u.company_name || "-"}</td>
+                  <td>
+                    {u.company_name ? (
+                      <span className="badge badge-pink">
+                        {u.company_name}
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: 12, color: "#a87c9e" }}>
+                        Platform
+                      </span>
+                    )}
+                  </td>
                   <td style={{ fontSize: 13 }}>
                     {u.created_at ? String(u.created_at).slice(0, 10) : "-"}
                   </td>
-                  <td><StatusBadge status={u.is_active ? "active" : "inactive"} /></td>
+                  <td>
+                    <StatusBadge status={u.is_active ? "active" : "inactive"} />
+                  </td>
                 </tr>
               ))}
             </tbody>
