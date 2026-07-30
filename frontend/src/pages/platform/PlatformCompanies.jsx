@@ -70,6 +70,7 @@ export function PlatformCompanies() {
               <tr>
                 <th>Company</th>
                 <th>Slug</th>
+                <th>Users</th>
                 <th>Created</th>
                 <th>Status</th>
                 <th>Actions</th>
@@ -78,7 +79,7 @@ export function PlatformCompanies() {
             <tbody>
               {companies.length === 0 && (
                 <tr>
-                  <td colSpan={5} style={{ padding: 20, color: "#a87c9e" }}>
+                  <td colSpan={6} style={{ padding: 20, color: "#a87c9e" }}>
                     No companies yet.
                   </td>
                 </tr>
@@ -87,6 +88,9 @@ export function PlatformCompanies() {
                 <tr key={c.id}>
                   <td style={{ fontWeight: 600 }}>{c.name}</td>
                   <td style={{ fontSize: 12.5, color: "#a87c9e" }}>{c.slug}</td>
+                  <td>
+                    <span className="badge badge-pink">{c.user_count} users</span>
+                  </td>
                   <td style={{ fontSize: 12.5 }}>
                     {String(c.created_at).slice(0, 10)}
                   </td>
@@ -126,7 +130,7 @@ export function PlatformCompanies() {
             <label className="form-label">Company name</label>
             <input className="input-field" value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="e.g. Smeyna Store" />
+              placeholder="e.g. My Shop" />
           </div>
           <div className="form-group">
             <label className="form-label">Slug (unique ID, no spaces)</label>
@@ -135,7 +139,7 @@ export function PlatformCompanies() {
                 ...form,
                 slug: e.target.value.toLowerCase().replace(/\s+/g, '-')
               })}
-              placeholder="e.g. smeyna-store" />
+              placeholder="e.g. my-shop" />
             <div style={{ fontSize: 11.5, color: "#a87c9e", marginTop: 4 }}>
               Lowercase letters, numbers, and hyphens only.
             </div>

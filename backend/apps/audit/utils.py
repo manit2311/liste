@@ -2,7 +2,6 @@ from .models import AuditLog
 
 
 def _detect_device(request):
-    """Turn the browser's User-Agent into a friendly 'OS · Browser' label."""
     if request is None:
         return ""
     ua = request.META.get("HTTP_USER_AGENT", "")
@@ -39,9 +38,11 @@ def _detect_device(request):
 
 
 def log_action(user, action, request=None):
-    """Write one permanent audit entry (with device info when request is provided)."""
+    """Write one permanent audit entry with device info and company."""
+    company = getattr(user, 'company', None) if user else None
     AuditLog.objects.create(
         user=user if getattr(user, "is_authenticated", False) else None,
         action=action,
         device=_detect_device(request),
+        company=company,
     )

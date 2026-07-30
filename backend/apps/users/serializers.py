@@ -3,11 +3,12 @@ from .models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
+    company_name = serializers.CharField(source='company.name', read_only=True, default=None)
+
     class Meta:
         model = User
-        fields = ['id', 'username', 'phone', 'role', 'is_active', 'is_superuser', 'created_at']
-
-
+        fields = ['id', 'username', 'phone', 'role', 'is_active', 'is_superuser', 'created_at', 'company_name']
+    
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 

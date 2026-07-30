@@ -3,6 +3,11 @@ from .models import Company
 
 
 class CompanySerializer(serializers.ModelSerializer):
+    user_count = serializers.SerializerMethodField()
+
     class Meta:
         model = Company
-        fields = '__all__'
+        fields = ['id', 'name', 'slug', 'is_active', 'created_at', 'user_count']
+
+    def get_user_count(self, obj):
+        return obj.users.count()
