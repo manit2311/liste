@@ -35,18 +35,16 @@ export function Sidebar({ current, onSelect, unreadCount = 0 }) {
     <aside className="sidebar">
       {/* Logo */}
       <div className="sidebar-logo">
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {/* Small logo mark */}
-          <div style={{
-            width: 32, height: 32, borderRadius: 8,
-            background: "linear-gradient(135deg, #a82d68, #c9407f)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 14, fontWeight: 700, color: "#fff",
-            fontFamily: "'DM Serif Display', serif",
-            flexShrink: 0,
-          }}>
-            L
-          </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <img
+            src="/logo.PNG"
+            alt="listé logo"
+            style={{
+              width: 44, height: 44, borderRadius: 10,
+              objectFit: "cover", flexShrink: 0,
+              boxShadow: "0 2px 8px rgba(180,100,150,0.2)"
+            }}
+          />
           <div>
             <div className="logo-text">listé</div>
             <div className="logo-sub">
@@ -94,7 +92,7 @@ export function Sidebar({ current, onSelect, unreadCount = 0 }) {
       {/* User card */}
       <div className="sidebar-footer">
         <div className="user-card" style={{ position: 'relative' }} ref={menuRef}>
-          {/* Avatar with logo initial */}
+          {/* Avatar */}
           <div style={{ position: "relative", flexShrink: 0 }}>
             <div className="avatar" style={{
               background: superAdmin ? '#a82d68' : user?.role === 'admin' ? '#c9407f' : '#a87c9e'
@@ -116,9 +114,7 @@ export function Sidebar({ current, onSelect, unreadCount = 0 }) {
           </div>
 
           <div className="user-info">
-            <div className="user-name" style={{ display: "flex", alignItems: "center", gap: 4 }}>
-              {displayName}
-            </div>
+            <div className="user-name">{displayName}</div>
             <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
               <div className="user-role" style={{
                 color: superAdmin ? '#a82d68' : user?.role === 'admin' ? '#c9407f' : '#a87c9e',
@@ -154,7 +150,6 @@ export function Sidebar({ current, onSelect, unreadCount = 0 }) {
               boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
               padding: 6, minWidth: 180, zIndex: 100,
             }}>
-              {/* User info header in menu */}
               <div style={{
                 padding: "8px 12px 10px",
                 borderBottom: "1px solid #f8eef5",
