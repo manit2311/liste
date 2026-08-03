@@ -11,28 +11,29 @@ def stock_movement_alert(sender, instance, created, **kwargs):
         return
     product = instance.product
     remarks = (instance.remarks or "")
+    company = getattr(product, 'company', None)
 
     if instance.transaction_type == "in":
         if "received" in remarks.lower():
             notify_staff("Items arrived",
                          f"📦 {product.name} +{instance.quantity} — {remarks}",
-                         "arrival")
+                         "arrival", company=company)
         else:
             notify_staff("Stock in",
                          f"⬆️ {product.name} +{instance.quantity}",
-                         "stock_in")
+                         "stock_in", company=company)
     elif instance.transaction_type == "out":
         notify_staff("Stock out",
                      f"⬇️ {product.name} −{instance.quantity} — {remarks}",
-                     "stock_out")
+                     "stock_out", company=company)
 
-    # Low stock check — notify everyone
+    # Low stock check
     product.refresh_from_db()
     if product.quantity <= product.reorder_point:
         notify_staff("Low stock alert",
                      f"⚠️ {product.name} is low: only {product.quantity} left "
                      f"(reorder point: {product.reorder_point})",
-                     "low_stock")
+                     "low_stock", company=company)
 
 
 @receiver(post_save, sender=Product)
@@ -43,7 +44,7 @@ def product_edit_alert(sender, instance, created, update_fields=None, **kwargs):
         return
     if update_fields and set(update_fields) == {"is_active"}:
         return
-    # Only boss gets product edit alerts
+    company = getattr(instance, 'company', None)
     notify_admins("Product edited",
                   f"✏️ {instance.name} was updated",
-                  "edit")
+                  "edit", company=company)
