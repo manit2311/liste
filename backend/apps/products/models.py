@@ -11,8 +11,15 @@ class Product(models.Model):
     reorder_point = models.IntegerField(default=5)
     is_active = models.BooleanField(default=True)
     description = models.TextField(blank=True, null=True)
-    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='products')
-    supplier = models.ForeignKey(Supplier, on_delete=models.SET_NULL, null=True, blank=True, related_name='products')
+    categories = models.ManyToManyField(
+        Category,
+        blank=True,
+        related_name='products'
+    )
+    supplier = models.ForeignKey(
+        Supplier, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name='products'
+    )
     company = models.ForeignKey(
         'companies.Company',
         on_delete=models.CASCADE,
@@ -23,8 +30,6 @@ class Product(models.Model):
 
     class Meta:
         db_table = 'products'
-        # SKU unique per company (two companies can share a SKU)
-        unique_together = [['sku', 'company']]
 
     def __str__(self):
         return self.name

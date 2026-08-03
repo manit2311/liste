@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.db.models import Sum
 from .models import Product, ProductImage
 from apps.warehouses.models import WarehouseStock
+from apps.categories.models import Category
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
@@ -20,15 +21,37 @@ class WarehouseStockMiniSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True, read_only=True)
-    category_name = serializers.CharField(source='category.name', read_only=True)
+    category_names = serializers.SerializerMethodField()
     supplier_name = serializers.CharField(source='supplier.name', read_only=True)
     warehouse_stocks = WarehouseStockMiniSerializer(many=True, read_only=True)
     unassigned = serializers.SerializerMethodField()
+    # Accept list of category IDs on write
+    categories = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Category.objects.all(),
+        required=False
+    )
 
     class Meta:
         model = Product
         fields = '__all__'
 
+    def get_category_names(self, obj):
+        return [c.name for c in obj.categories.all()]
+
     def get_unassigned(self, obj):
         allocated = obj.warehouse_stocks.aggregate(s=Sum('quantity'))['s'] or 0
         return obj.quantity - allocated
+
+    def create(self, validated_data):
+        categories = validated_data.pop('categories', [])
+        product = super().create(validated_data)
+        product.categories.set(categories)
+        return product
+
+    def update(self, instance, validated_data):
+        categories = validated_data.pop('categories', None)
+        product = super().update(instance, validated_data)
+        if categories is not None:
+            product.categories.set(categories)
+        return product
