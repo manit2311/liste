@@ -23,7 +23,7 @@ class ProductViewSet(CompanyScopedMixin, viewsets.ModelViewSet):
     pagination_class = None
     filter_backends = [filters.SearchFilter, filters.OrderingFilter, DjangoFilterBackend]
     search_fields = ['name', 'sku', 'description']
-    filterset_fields = ['category', 'supplier']
+    filterset_fields = ['supplier']
     ordering_fields = ['name', 'price', 'quantity', 'create_at']
 
     def get_queryset(self):
