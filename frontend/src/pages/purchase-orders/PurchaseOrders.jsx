@@ -7,7 +7,6 @@ import { Modal } from '../../components/common/Modal';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { useAuthStore } from '../../store/authStore';
 import { isBoss } from '../../constants/roles';
-import { FiPlus, FiTrash2, FiCheck, FiX, FiSlash, FiTruck, FiPackage, FiRefreshCw, FiEye, FiPrinter, FiSearch } from 'react-icons/fi';
 
 const emptyPO = { supplier: "", expected_date: "", warehouse: "", notes: "", status: "pending", items: [] };
 const emptyItem = { product: "", quantity: 1, price: "" };
@@ -19,11 +18,6 @@ const STATUS_LABELS = {
   in_transit: "In transit",
   received: "Received",
   cancelled: "Cancelled",
-};
-
-const PAYMENT_LABELS = {
-  cash: "Cash", card: "Card",
-  bank_transfer: "Bank Transfer", qr: "QR / ABA",
 };
 
 function unwrapList(data) {
@@ -123,11 +117,8 @@ export function PurchaseOrders() {
       loadPOs(filter, search, page);
     } catch (error) {
       console.error(error);
-      if (error.response) {
-        alert(error.response.data.detail || JSON.stringify(error.response.data));
-      } else {
-        alert("Something went wrong.");
-      }
+      if (error.response) alert(error.response.data.detail || JSON.stringify(error.response.data));
+      else alert("Something went wrong.");
     }
   };
 
@@ -141,37 +132,35 @@ export function PurchaseOrders() {
       }
     } catch (error) {
       console.error(error);
-      if (error.response) {
-        alert(error.response.data.detail || JSON.stringify(error.response.data));
-      } else {
-        alert("Something went wrong.");
-      }
+      if (error.response) alert(error.response.data.detail || JSON.stringify(error.response.data));
+      else alert("Something went wrong.");
     }
   };
 
   const actionButtons = (po) => {
+    if (!boss) return null; // supervisor can only view
     switch (po.status) {
       case "pending":
         return (
           <>
             <button className="action-btn" title="Approve"
-              onClick={() => changeStatus(po, "approved")}><FiCheck /></button>
+              onClick={() => changeStatus(po, "approved")}>✅</button>
             <button className="action-btn danger" title="Reject"
-              onClick={() => changeStatus(po, "rejected", `Reject ${poNumber(po)}?`)}><FiX /></button>
+              onClick={() => changeStatus(po, "rejected", `Reject ${poNumber(po)}?`)}>❌</button>
             <button className="action-btn danger" title="Cancel"
-              onClick={() => changeStatus(po, "cancelled", `Cancel ${poNumber(po)}?`)}><FiSlash /></button>
+              onClick={() => changeStatus(po, "cancelled", `Cancel ${poNumber(po)}?`)}>🚫</button>
           </>
         );
       case "approved":
         return (
           <>
             <button className="action-btn" title="Mark in transit"
-              onClick={() => changeStatus(po, "in_transit")}><FiTruck /></button>
+              onClick={() => changeStatus(po, "in_transit")}>🚚</button>
             <button className="action-btn" title="Receive goods"
               onClick={() => changeStatus(po, "received",
-                `Receive ${poNumber(po)}? Stock will be added.`)}><FiPackage /></button>
+                `Receive ${poNumber(po)}? Stock will be added.`)}>📦</button>
             <button className="action-btn danger" title="Cancel"
-              onClick={() => changeStatus(po, "cancelled", `Cancel ${poNumber(po)}?`)}><FiSlash /></button>
+              onClick={() => changeStatus(po, "cancelled", `Cancel ${poNumber(po)}?`)}>🚫</button>
           </>
         );
       case "in_transit":
@@ -179,16 +168,16 @@ export function PurchaseOrders() {
           <>
             <button className="action-btn" title="Receive goods"
               onClick={() => changeStatus(po, "received",
-                `Receive ${poNumber(po)}? Stock will be added.`)}><FiPackage /></button>
+                `Receive ${poNumber(po)}? Stock will be added.`)}>📦</button>
             <button className="action-btn danger" title="Cancel"
-              onClick={() => changeStatus(po, "cancelled", `Cancel ${poNumber(po)}?`)}><FiSlash /></button>
+              onClick={() => changeStatus(po, "cancelled", `Cancel ${poNumber(po)}?`)}>🚫</button>
           </>
         );
       case "rejected":
       case "cancelled":
         return (
           <button className="action-btn" title="Resubmit as pending"
-            onClick={() => changeStatus(po, "pending")}><FiRefreshCw /></button>
+            onClick={() => changeStatus(po, "pending")}>🔄</button>
         );
       default:
         return null;
@@ -200,8 +189,10 @@ export function PurchaseOrders() {
       <tr>
         <td>${item.product_name}</td>
         <td style="text-align:center">${item.quantity}</td>
-        ${boss ? `<td style="text-align:right">$${Number(item.price).toFixed(2)}</td>
-        <td style="text-align:right">$${(Number(item.quantity) * Number(item.price)).toFixed(2)}</td>` : ''}
+        ${boss ? `
+        <td style="text-align:right">$${Number(item.price).toFixed(2)}</td>
+        <td style="text-align:right">$${(Number(item.quantity) * Number(item.price)).toFixed(2)}</td>
+        ` : ''}
       </tr>`).join("");
 
     const html = `
@@ -226,7 +217,7 @@ export function PurchaseOrders() {
         <div class="sub">Inventory Management System</div>
         <h2>Purchase Order ${poNumber(po)}</h2>
         <div class="meta">
-          <strong>Supplier:</strong> ${po.supplier_name ?? "-"}<br/>
+          ${boss ? `<strong>Supplier:</strong> ${po.supplier_name ?? "-"}<br/>` : ""}
           <strong>Order date:</strong> ${po.order_date ? String(po.order_date).slice(0, 10) : "-"}<br/>
           <strong>Expected delivery:</strong> ${po.expected_date ?? "-"}<br/>
           <strong>Status:</strong> ${STATUS_LABELS[po.status] ?? po.status}
@@ -236,12 +227,15 @@ export function PurchaseOrders() {
             <tr>
               <th>Product</th>
               <th style="text-align:center">Qty</th>
-              ${boss ? '<th style="text-align:right">Unit price</th><th style="text-align:right">Subtotal</th>' : ''}
+              ${boss ? `
+              <th style="text-align:right">Unit price</th>
+              <th style="text-align:right">Subtotal</th>
+              ` : ''}
             </tr>
           </thead>
           <tbody>${rows}</tbody>
         </table>
-        ${boss ? `<div class="totals">Total cost: $${Number(poTotal(po)).toFixed(2)}</div>` : ''}
+        ${boss ? `<div class="totals">Total cost: $${Number(poTotal(po)).toFixed(2)}</div>` : ""}
         ${po.notes ? `<div class="notes"><strong>Notes:</strong> ${po.notes}</div>` : ""}
       </body>
       </html>`;
@@ -262,11 +256,12 @@ export function PurchaseOrders() {
           <h1>Purchase orders</h1>
           <p>Track inbound orders from your suppliers.</p>
         </div>
-        <button className="btn btn-primary"
-          style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
-          onClick={() => { setForm(emptyPO); setShowAdd(true); }}>
-          <FiPlus /> Create PO
-        </button>
+        {boss && (
+          <button className="btn btn-primary"
+            onClick={() => { setForm(emptyPO); setShowAdd(true); }}>
+            ＋ Create PO
+          </button>
+        )}
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 14, marginBottom: 22 }}>
@@ -285,15 +280,13 @@ export function PurchaseOrders() {
 
       <div className="toolbar">
         <div className="toolbar-left">
-          <div className="search-wrap" style={{ maxWidth: 260 }}>
-            <span className="search-icon"><FiSearch /></span>
-            <input
-              className="search-input"
-              placeholder="Search purchase orders…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
+          <input
+            className="search-input"
+            placeholder="Search purchase orders…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ maxWidth: 260 }}
+          />
           <div className="filter-bar">
             {["all", "pending", "approved", "rejected", "in_transit", "received", "cancelled"].map(f => (
               <button
@@ -315,7 +308,7 @@ export function PurchaseOrders() {
               <tr>
                 <th>PO #</th>
                 <th>Date</th>
-                <th>Supplier</th>
+                {boss && <th>Supplier</th>}
                 <th>Items</th>
                 {boss && <th>Total cost</th>}
                 <th>Expected by</th>
@@ -326,7 +319,7 @@ export function PurchaseOrders() {
             <tbody>
               {pos.length === 0 && (
                 <tr>
-                  <td colSpan={boss ? 8 : 7} style={{ padding: 20, color: "#a87c9e" }}>
+                  <td colSpan={boss ? 8 : 5} style={{ padding: 20, color: "#a87c9e" }}>
                     No purchase orders yet.
                   </td>
                 </tr>
@@ -337,8 +330,12 @@ export function PurchaseOrders() {
                   <td style={{ color: "#a87c9e", fontSize: 12 }}>
                     {po.order_date ? String(po.order_date).slice(0, 10) : "-"}
                   </td>
-                  <td>{po.supplier_name ?? "-"}</td>
-                  <td><span className="badge badge-pink">{po.items.length} items</span></td>
+                  {boss && <td>{po.supplier_name ?? "-"}</td>}
+                  <td>
+                    <span className="badge badge-pink">
+                      {po.items.length} items
+                    </span>
+                  </td>
                   {boss && (
                     <td style={{ fontWeight: 600 }}>
                       ${Number(poTotal(po)).toFixed(2)}
@@ -349,12 +346,10 @@ export function PurchaseOrders() {
                   <td>
                     <div className="actions-cell">
                       {actionButtons(po)}
-                      <button className="action-btn" onClick={() => setShowDetail(po)} title="View">
-                        <FiEye />
-                      </button>
-                      <button className="action-btn" onClick={() => printPO(po)} title="Print / PDF">
-                        <FiPrinter />
-                      </button>
+                      <button className="action-btn"
+                        onClick={() => setShowDetail(po)} title="View">👁</button>
+                      <button className="action-btn"
+                        onClick={() => printPO(po)} title="Print / PDF">🖨️</button>
                     </div>
                   </td>
                 </tr>
@@ -366,15 +361,15 @@ export function PurchaseOrders() {
         <div className="pagination">
           <button className="page-btn" disabled={page <= 1} onClick={() => setPage(page - 1)}>‹</button>
           {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-            <button key={p} className={`page-btn ${page === p ? "active" : ""}`} onClick={() => setPage(p)}>
-              {p}
-            </button>
+            <button key={p} className={`page-btn ${page === p ? "active" : ""}`}
+              onClick={() => setPage(p)}>{p}</button>
           ))}
           <button className="page-btn" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>›</button>
         </div>
       </div>
 
-      {showAdd && (
+      {/* Create PO Modal — boss only */}
+      {boss && showAdd && (
         <Modal
           title="Create purchase order"
           onClose={() => setShowAdd(false)}
@@ -423,22 +418,15 @@ export function PurchaseOrders() {
                   placeholder="Qty" />
               </div>
               <div className="form-group" style={{ display: "flex", gap: 8 }}>
-                {boss && (
-                  <input className="input-field" type="number" value={item.price}
-                    onChange={(e) => updateItemRow(i, "price", e.target.value)}
-                    placeholder="Unit price" />
-                )}
-                <button className="action-btn danger" onClick={() => removeItemRow(i)} title="Remove">
-                  <FiTrash2 />
-                </button>
+                <input className="input-field" type="number" value={item.price}
+                  onChange={(e) => updateItemRow(i, "price", e.target.value)}
+                  placeholder="Unit price" />
+                <button className="action-btn danger" onClick={() => removeItemRow(i)}
+                  title="Remove">🗑️</button>
               </div>
             </div>
           ))}
-          <button className="btn btn-secondary"
-            style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
-            onClick={addItemRow}>
-            <FiPlus /> Add product
-          </button>
+          <button className="btn btn-secondary" onClick={addItemRow}>＋ Add product</button>
 
           <div className="form-group" style={{ marginTop: 14 }}>
             <label className="form-label">Notes</label>
@@ -450,9 +438,10 @@ export function PurchaseOrders() {
         </Modal>
       )}
 
+      {/* View Detail Modal */}
       {showDetail && (
         <Modal title={poNumber(showDetail)} onClose={() => setShowDetail(null)}>
-          <p><strong>Supplier:</strong> {showDetail.supplier_name}</p>
+          {boss && <p><strong>Supplier:</strong> {showDetail.supplier_name}</p>}
           <p><strong>Warehouse:</strong> {showDetail.warehouse_name ?? "-"}</p>
           <p><strong>Expected by:</strong> {showDetail.expected_date ?? "-"}</p>
           <p><strong>Status:</strong> <StatusBadge status={showDetail.status} /></p>
@@ -481,10 +470,8 @@ export function PurchaseOrders() {
             </p>
           )}
           <div style={{ textAlign: "right", marginTop: 12 }}>
-            <button className="btn btn-secondary"
-              style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
-              onClick={() => printPO(showDetail)}>
-              <FiPrinter /> Print / PDF
+            <button className="btn btn-secondary" onClick={() => printPO(showDetail)}>
+              🖨️ Print / PDF
             </button>
           </div>
         </Modal>

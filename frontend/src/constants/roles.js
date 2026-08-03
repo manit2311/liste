@@ -1,4 +1,4 @@
-export const STAFF_PAGES = ["dashboard", "products", "categories", "inventory", "orders", "warehouses"];
+export const STAFF_PAGES = ["dashboard", "products", "categories", "inventory", "orders", "warehouses", "purchase-orders"];
 
 export const BOSS_EXTRA_PAGES = ["suppliers", "purchase-orders", "notifications", "audit", "users"];
 
