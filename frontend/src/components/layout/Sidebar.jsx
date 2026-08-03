@@ -165,23 +165,28 @@ export function Sidebar({ current, onSelect, unreadCount = 0 }) {
 
               <button
                 onClick={() => { setMenuOpen(false); logout(); }}
+                onMouseEnter={e => e.currentTarget.style.background = '#fdf0f7'}
+                onMouseLeave={e => e.currentTarget.style.background = 'none'}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 8,
                   width: '100%', textAlign: 'left',
                   padding: '9px 12px', background: 'none', border: 'none',
                   borderRadius: 6, cursor: 'pointer', color: '#d23369',
-                  fontSize: 14, fontWeight: 600,
+                  fontSize: 14, fontWeight: 600, transition: 'background 0.15s',
                 }}
               >
                 <FiLogOut size={14} /> Log out
               </button>
               <button
                 onClick={() => setMenuOpen(false)}
+                onMouseEnter={e => e.currentTarget.style.background = '#fdf0f7'}
+                onMouseLeave={e => e.currentTarget.style.background = 'none'}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 8,
                   width: '100%', textAlign: 'left',
                   padding: '9px 12px', background: 'none', border: 'none',
-                  borderRadius: 6, cursor: 'pointer', color: '#6b5b66', fontSize: 14,
+                  borderRadius: 6, cursor: 'pointer', color: '#6b5b66',
+                  fontSize: 14, transition: 'background 0.15s',
                 }}
               >
                 <FiX size={14} /> Cancel

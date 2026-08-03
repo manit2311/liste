@@ -17,7 +17,7 @@ def _unassigned(product):
 
 class ProductViewSet(CompanyScopedMixin, viewsets.ModelViewSet):
     queryset = Product.objects.select_related(
-        'category', 'supplier'
+    'supplier'
     ).prefetch_related('images', 'warehouse_stocks__warehouse')
     serializer_class = ProductSerializer
     pagination_class = None
