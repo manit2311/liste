@@ -102,8 +102,12 @@ export function Dashboard({ setPage }) {
   // Inventory by category, based on real product categories
   const categoryTotals = {};
   products.forEach(p => {
-    const cat = p.category_name || "Uncategorized";
-    categoryTotals[cat] = (categoryTotals[cat] || 0) + Number(p.quantity || 0);
+    const cats = p.category_names && p.category_names.length > 0
+      ? p.category_names
+      : ["Uncategorized"];
+    cats.forEach(cat => {
+      categoryTotals[cat] = (categoryTotals[cat] || 0) + Number(p.quantity || 0);
+    });
   });
   const categoryList = Object.entries(categoryTotals)
     .map(([label, units]) => ({ label, units }))
