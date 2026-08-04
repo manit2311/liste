@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { orderAPI } from "../../api/orders";
 import { productAPI } from "../../api/products";
 import { Modal } from '../../components/common/Modal';
 import { StatusBadge } from '../../components/common/StatusBadge';
-import { FiPlus, FiEye, FiEdit2, FiPrinter, FiTrash2, FiSearch } from 'react-icons/fi';
+import { FiPlus, FiEye, FiEdit2, FiPrinter, FiTrash2, FiSearch, FiChevronDown } from 'react-icons/fi';
 
 const emptyOrder = {
   invoice_number: "", customer_name: "", status: "pending",
@@ -27,7 +27,6 @@ const PAYMENT_LABELS = {
   qr: "QR / ABA",
 };
 
-// Mirrors ALLOWED_TRANSITIONS in apps/orders/serializers.py — keep both in sync.
 const ALLOWED_TRANSITIONS = {
   pending: ["pending", "processing", "cancelled"],
   processing: ["processing", "shipped", "cancelled"],
@@ -35,6 +34,90 @@ const ALLOWED_TRANSITIONS = {
   delivered: ["delivered"],
   cancelled: ["cancelled", "pending"],
 };
+
+// Custom pink dropdown component
+function PinkDropdown({ value, options, onChange, disabled }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  if (disabled) {
+    return (
+      <div style={{
+        padding: "4px 10px", fontSize: 12.5, borderRadius: 8,
+        border: "1.5px solid #f0dcea", background: "#fdf8fc",
+        color: "#c4a0bc", display: "inline-flex", alignItems: "center", gap: 6,
+        minWidth: 110,
+      }}>
+        {STATUS_LABELS[value] || value}
+      </div>
+    );
+  }
+
+  return (
+    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
+      <button
+        onClick={() => setOpen(v => !v)}
+        style={{
+          padding: "4px 10px", fontSize: 12.5, borderRadius: 8,
+          border: `1.5px solid ${open ? '#c9407f' : '#f0dcea'}`,
+          background: open ? '#fdf0f7' : '#fdf8fc',
+          color: "#2c1a26", cursor: "pointer",
+          display: "inline-flex", alignItems: "center", gap: 6,
+          minWidth: 110, transition: "all 0.15s",
+          boxShadow: open ? '0 0 0 3px rgba(201,64,127,0.1)' : 'none',
+        }}
+      >
+        {STATUS_LABELS[value] || value}
+        <FiChevronDown size={12} style={{
+          transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+          transition: 'transform 0.15s', color: '#c9407f'
+        }} />
+      </button>
+
+      {open && (
+        <div style={{
+          position: "absolute", top: "calc(100% + 4px)", left: 0,
+          background: "#fff", borderRadius: 10, zIndex: 999,
+          boxShadow: "0 4px 20px rgba(180,100,150,0.18)",
+          border: "1.5px solid #f0dcea",
+          minWidth: 130, overflow: "hidden",
+        }}>
+          {options.map(opt => (
+            <div
+              key={opt}
+              onClick={() => { onChange(opt); setOpen(false); }}
+              style={{
+                padding: "8px 14px", fontSize: 13, cursor: "pointer",
+                background: opt === value ? '#fdf0f7' : '#fff',
+                color: opt === value ? '#c9407f' : '#2c1a26',
+                fontWeight: opt === value ? 600 : 400,
+                transition: "background 0.12s",
+              }}
+              onMouseEnter={e => {
+                if (opt !== value) e.currentTarget.style.background = '#fdf0f7';
+              }}
+              onMouseLeave={e => {
+                if (opt !== value) e.currentTarget.style.background = '#fff';
+              }}
+            >
+              {STATUS_LABELS[opt] || opt}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function Orders() {
   const [orders, setOrders] = useState([]);
@@ -96,7 +179,6 @@ export function Orders() {
     setForm({ ...form, items: form.items.filter((_, i) => i !== index) });
   };
 
-  // Live totals shown inside the Add/Edit form
   const formSubtotal = form.items.reduce(
     (sum, i) => sum + Number(i.quantity || 0) * Number(i.unit_price || 0), 0
   );
@@ -190,8 +272,6 @@ export function Orders() {
     }
   };
 
-  // Print Invoice / Download PDF — opens a printable window.
-  // In the print dialog, choose a printer to print OR "Save as PDF" to download.
   const printInvoice = (order) => {
     const discountLabel = order.discount_type === "percent"
       ? `${Number(order.discount_value)}%`
@@ -270,7 +350,7 @@ export function Orders() {
       </div>
 
       <div className="toolbar">
-      <div className="toolbar-left">
+        <div className="toolbar-left">
           <div className="search-wrap" style={{ maxWidth: 260 }}>
             <span className="search-icon"><FiSearch /></span>
             <input
@@ -319,33 +399,16 @@ export function Orders() {
                   <td style={{ fontWeight: 500 }}>${Number(o.total).toFixed(2)}</td>
                   <td>{PAYMENT_LABELS[o.payment_method] || o.payment_method}</td>
                   <td>
-                    <select
-  className="select-field"
-  style={{
-    padding: "4px 8px",
-    fontSize: 12.5,
-    border: "1.5px solid #f0dcea",
-    borderRadius: 8,
-    outline: "none",
-    background: "#fdf8fc",
-    color: "#2c1a26",
-    cursor: "pointer",
-    transition: "border-color 0.15s",
-  }}
-  onFocus={e => e.target.style.borderColor = '#c9407f'}
-  onBlur={e => e.target.style.borderColor = '#f0dcea'}
-  value={o.status}
-  disabled={ALLOWED_TRANSITIONS[o.status]?.length <= 1}
-  onChange={(e) => handleStatusChange(o, e.target.value)}
->
-                      {(ALLOWED_TRANSITIONS[o.status] || [o.status]).map(s => (
-                        <option key={s} value={s}>{STATUS_LABELS[s]}</option>
-                      ))}
-                    </select>
+                    <PinkDropdown
+                      value={o.status}
+                      options={ALLOWED_TRANSITIONS[o.status] || [o.status]}
+                      onChange={(newStatus) => handleStatusChange(o, newStatus)}
+                      disabled={ALLOWED_TRANSITIONS[o.status]?.length <= 1}
+                    />
                   </td>
                   <td>
                     <div className="actions-cell">
-                    <button className="action-btn" onClick={() => setShowDetail(o)} title="View"><FiEye /></button>
+                      <button className="action-btn" onClick={() => setShowDetail(o)} title="View"><FiEye /></button>
                       <button className="action-btn" onClick={() => openEdit(o)} title="Edit"><FiEdit2 /></button>
                       <button className="action-btn" onClick={() => printInvoice(o)} title="Print / Download PDF"><FiPrinter /></button>
                       <button className="action-btn danger" onClick={() => setShowDelete(o)} title="Delete"><FiTrash2 /></button>
@@ -470,7 +533,9 @@ export function Orders() {
               </div>
             </div>
           ))}
-          <button className="btn btn-secondary" style={{ display: "inline-flex", alignItems: "center", gap: 6 }} onClick={addItemRow}><FiPlus /> Add product</button>
+          <button className="btn btn-secondary" style={{ display: "inline-flex", alignItems: "center", gap: 6 }} onClick={addItemRow}>
+            <FiPlus /> Add product
+          </button>
 
           <div style={{ textAlign: "right", marginTop: 16, lineHeight: 1.8 }}>
             <div>Subtotal: <strong>${formSubtotal.toFixed(2)}</strong></div>
@@ -518,7 +583,7 @@ export function Orders() {
             <div style={{ fontWeight: 700 }}>Total: ${Number(showDetail.total).toFixed(2)}</div>
           </div>
           <div style={{ textAlign: "right", marginTop: 12 }}>
-          <button className="btn btn-secondary" style={{ display: "inline-flex", alignItems: "center", gap: 6 }} onClick={() => printInvoice(showDetail)}>
+            <button className="btn btn-secondary" style={{ display: "inline-flex", alignItems: "center", gap: 6 }} onClick={() => printInvoice(showDetail)}>
               <FiPrinter /> Print / Download PDF
             </button>
           </div>
