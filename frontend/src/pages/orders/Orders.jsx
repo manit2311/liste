@@ -320,12 +320,24 @@ export function Orders() {
                   <td>{PAYMENT_LABELS[o.payment_method] || o.payment_method}</td>
                   <td>
                     <select
-                      className="select-field"
-                      style={{ padding: "4px 8px", fontSize: 12.5 }}
-                      value={o.status}
-                      disabled={ALLOWED_TRANSITIONS[o.status]?.length <= 1}
-                      onChange={(e) => handleStatusChange(o, e.target.value)}
-                    >
+  className="select-field"
+  style={{
+    padding: "4px 8px",
+    fontSize: 12.5,
+    border: "1.5px solid #f0dcea",
+    borderRadius: 8,
+    outline: "none",
+    background: "#fdf8fc",
+    color: "#2c1a26",
+    cursor: "pointer",
+    transition: "border-color 0.15s",
+  }}
+  onFocus={e => e.target.style.borderColor = '#c9407f'}
+  onBlur={e => e.target.style.borderColor = '#f0dcea'}
+  value={o.status}
+  disabled={ALLOWED_TRANSITIONS[o.status]?.length <= 1}
+  onChange={(e) => handleStatusChange(o, e.target.value)}
+>
                       {(ALLOWED_TRANSITIONS[o.status] || [o.status]).map(s => (
                         <option key={s} value={s}>{STATUS_LABELS[s]}</option>
                       ))}
