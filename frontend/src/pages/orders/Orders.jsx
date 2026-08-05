@@ -35,16 +35,13 @@ const ALLOWED_TRANSITIONS = {
   cancelled: ["cancelled", "pending"],
 };
 
-// Custom pink dropdown component
 function PinkDropdown({ value, options, onChange, disabled }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
   useEffect(() => {
     function handleClickOutside(e) {
-      if (ref.current && !ref.current.contains(e.target)) {
-        setOpen(false);
-      }
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -56,7 +53,7 @@ function PinkDropdown({ value, options, onChange, disabled }) {
         padding: "4px 10px", fontSize: 12.5, borderRadius: 8,
         border: "1.5px solid #f0dcea", background: "#fdf8fc",
         color: "#c4a0bc", display: "inline-flex", alignItems: "center", gap: 6,
-        minWidth: 110,
+        width: "fit-content", whiteSpace: "nowrap",
       }}>
         {STATUS_LABELS[value] || value}
       </div>
@@ -73,7 +70,8 @@ function PinkDropdown({ value, options, onChange, disabled }) {
           background: open ? '#fdf0f7' : '#fdf8fc',
           color: "#2c1a26", cursor: "pointer",
           display: "inline-flex", alignItems: "center", gap: 6,
-          minWidth: 110, transition: "all 0.15s",
+          width: "fit-content", whiteSpace: "nowrap",
+          transition: "all 0.15s",
           boxShadow: open ? '0 0 0 3px rgba(201,64,127,0.1)' : 'none',
         }}
       >
@@ -90,7 +88,7 @@ function PinkDropdown({ value, options, onChange, disabled }) {
           background: "#fff", borderRadius: 10, zIndex: 999,
           boxShadow: "0 4px 20px rgba(180,100,150,0.18)",
           border: "1.5px solid #f0dcea",
-          minWidth: 130, overflow: "hidden",
+          minWidth: "fit-content", whiteSpace: "nowrap", overflow: "hidden",
         }}>
           {options.map(opt => (
             <div
@@ -214,14 +212,8 @@ export function Orders() {
   };
 
   const handleSaveOrder = async () => {
-    if (form.items.length === 0) {
-      alert("Please add at least one product.");
-      return;
-    }
-    if (form.items.some(item => !item.product)) {
-      alert("Please select a product for every line item.");
-      return;
-    }
+    if (form.items.length === 0) { alert("Please add at least one product."); return; }
+    if (form.items.some(item => !item.product)) { alert("Please select a product for every line item."); return; }
     try {
       if (editingId) {
         await orderAPI.update(editingId, form);
@@ -235,11 +227,8 @@ export function Orders() {
       loadOrders(filter, search, page);
     } catch (error) {
       console.error(error);
-      if (error.response) {
-        alert(error.response.data.detail || JSON.stringify(error.response.data));
-      } else {
-        alert("Something went wrong.");
-      }
+      if (error.response) alert(error.response.data.detail || JSON.stringify(error.response.data));
+      else alert("Something went wrong.");
     }
   };
 
@@ -250,11 +239,8 @@ export function Orders() {
       loadOrders(filter, search, page);
     } catch (error) {
       console.error(error);
-      if (error.response) {
-        alert(error.response.data.detail || JSON.stringify(error.response.data));
-      } else {
-        alert("Something went wrong.");
-      }
+      if (error.response) alert(error.response.data.detail || JSON.stringify(error.response.data));
+      else alert("Something went wrong.");
     }
   };
 
@@ -264,11 +250,8 @@ export function Orders() {
       loadOrders(filter, search, page);
     } catch (error) {
       console.error(error);
-      if (error.response) {
-        alert(error.response.data.detail || JSON.stringify(error.response.data));
-      } else {
-        alert("Something went wrong.");
-      }
+      if (error.response) alert(error.response.data.detail || JSON.stringify(error.response.data));
+      else alert("Something went wrong.");
     }
   };
 
@@ -276,7 +259,6 @@ export function Orders() {
     const discountLabel = order.discount_type === "percent"
       ? `${Number(order.discount_value)}%`
       : `$${Number(order.discount_value).toFixed(2)}`;
-
     const rows = order.items.map(item => `
       <tr>
         <td>${item.product_name}</td>
@@ -284,24 +266,20 @@ export function Orders() {
         <td style="text-align:right">$${Number(item.unit_price).toFixed(2)}</td>
         <td style="text-align:right">$${Number(item.subtotal).toFixed(2)}</td>
       </tr>`).join("");
-
     const html = `
-      <html>
-      <head>
-        <title>Invoice ${order.invoice_number}</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 40px; color: #333; }
-          h1 { color: #d23369; margin-bottom: 0; }
-          .sub { color: #888; margin-top: 4px; }
-          .meta { margin: 24px 0; line-height: 1.7; }
-          table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-          th, td { border-bottom: 1px solid #ddd; padding: 10px 8px; text-align: left; }
-          th { background: #faf0f5; }
-          .totals { margin-top: 20px; text-align: right; line-height: 1.9; }
-          .grand { font-size: 18px; font-weight: bold; color: #d23369; }
-          .notes { margin-top: 24px; font-size: 13px; color: #666; }
-        </style>
-      </head>
+      <html><head><title>Invoice ${order.invoice_number}</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 40px; color: #333; }
+        h1 { color: #d23369; margin-bottom: 0; }
+        .sub { color: #888; margin-top: 4px; }
+        .meta { margin: 24px 0; line-height: 1.7; }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        th, td { border-bottom: 1px solid #ddd; padding: 10px 8px; text-align: left; }
+        th { background: #faf0f5; }
+        .totals { margin-top: 20px; text-align: right; line-height: 1.9; }
+        .grand { font-size: 18px; font-weight: bold; color: #d23369; }
+        .notes { margin-top: 24px; font-size: 13px; color: #666; }
+      </style></head>
       <body>
         <h1>listé</h1>
         <div class="sub">Inventory Management System</div>
@@ -314,9 +292,7 @@ export function Orders() {
           <strong>Status:</strong> ${STATUS_LABELS[order.status] || order.status}
         </div>
         <table>
-          <thead>
-            <tr><th>Product</th><th style="text-align:center">Qty</th><th style="text-align:right">Unit price</th><th style="text-align:right">Subtotal</th></tr>
-          </thead>
+          <thead><tr><th>Product</th><th style="text-align:center">Qty</th><th style="text-align:right">Unit price</th><th style="text-align:right">Subtotal</th></tr></thead>
           <tbody>${rows}</tbody>
         </table>
         <div class="totals">
@@ -325,9 +301,7 @@ export function Orders() {
           <span class="grand">Total: $${Number(order.total).toFixed(2)}</span>
         </div>
         ${order.notes ? `<div class="notes"><strong>Notes:</strong> ${order.notes}</div>` : ""}
-      </body>
-      </html>`;
-
+      </body></html>`;
     const win = window.open("", "_blank", "width=800,height=900");
     win.document.write(html);
     win.document.close();
@@ -353,20 +327,13 @@ export function Orders() {
         <div className="toolbar-left">
           <div className="search-wrap" style={{ maxWidth: 260 }}>
             <span className="search-icon"><FiSearch /></span>
-            <input
-              className="search-input"
-              placeholder="Search orders…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+            <input className="search-input" placeholder="Search orders…" value={search}
+              onChange={(e) => setSearch(e.target.value)} />
           </div>
           <div className="filter-bar">
             {["all", "pending", "processing", "shipped", "delivered", "cancelled"].map(f => (
-              <button
-                key={f}
-                className={`filter-chip ${filter === f ? "active" : ""}`}
-                onClick={() => setFilter(f)}
-              >
+              <button key={f} className={`filter-chip ${filter === f ? "active" : ""}`}
+                onClick={() => setFilter(f)}>
                 {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
               </button>
             ))}
@@ -410,7 +377,7 @@ export function Orders() {
                     <div className="actions-cell">
                       <button className="action-btn" onClick={() => setShowDetail(o)} title="View"><FiEye /></button>
                       <button className="action-btn" onClick={() => openEdit(o)} title="Edit"><FiEdit2 /></button>
-                      <button className="action-btn" onClick={() => printInvoice(o)} title="Print / Download PDF"><FiPrinter /></button>
+                      <button className="action-btn" onClick={() => printInvoice(o)} title="Print"><FiPrinter /></button>
                       <button className="action-btn danger" onClick={() => setShowDelete(o)} title="Delete"><FiTrash2 /></button>
                     </div>
                   </td>
@@ -423,17 +390,14 @@ export function Orders() {
         <div className="pagination">
           <button className="page-btn" disabled={page <= 1} onClick={() => setPage(page - 1)}>‹</button>
           {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-            <button key={p} className={`page-btn ${page === p ? "active" : ""}`} onClick={() => setPage(p)}>
-              {p}
-            </button>
+            <button key={p} className={`page-btn ${page === p ? "active" : ""}`} onClick={() => setPage(p)}>{p}</button>
           ))}
           <button className="page-btn" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>›</button>
         </div>
       </div>
 
       {showAdd && (
-        <Modal
-          title={editingId ? `Edit order ${form.invoice_number}` : "Add new order"}
+        <Modal title={editingId ? `Edit order ${form.invoice_number}` : "Add new order"}
           onClose={() => setShowAdd(false)}
           footer={<>
             <button className="btn btn-secondary" onClick={() => setShowAdd(false)}>Cancel</button>
@@ -447,8 +411,7 @@ export function Orders() {
               <label className="form-label">Invoice number</label>
               <input className="input-field" value={form.invoice_number}
                 onChange={(e) => setForm({ ...form, invoice_number: e.target.value })}
-                placeholder="Auto-generated if left blank"
-                disabled={!!editingId} />
+                placeholder="Auto-generated if left blank" disabled={!!editingId} />
             </div>
             <div className="form-group">
               <label className="form-label">Customer name</label>
@@ -456,7 +419,6 @@ export function Orders() {
                 onChange={(e) => setForm({ ...form, customer_name: e.target.value })} />
             </div>
           </div>
-
           <div className="grid-2">
             <div className="form-group">
               <label className="form-label">Status</label>
@@ -477,7 +439,6 @@ export function Orders() {
               </select>
             </div>
           </div>
-
           <div className="grid-2">
             <div className="form-group">
               <label className="form-label">Discount type</label>
@@ -488,30 +449,25 @@ export function Orders() {
               </select>
             </div>
             <div className="form-group">
-              <label className="form-label">
-                Discount {form.discount_type === "percent" ? "(%)" : "($)"}
-              </label>
+              <label className="form-label">Discount {form.discount_type === "percent" ? "(%)" : "($)"}</label>
               <input className="input-field" type="number" min="0"
                 max={form.discount_type === "percent" ? 100 : undefined}
                 value={form.discount_value}
                 onChange={(e) => setForm({ ...form, discount_value: e.target.value })} />
             </div>
           </div>
-
           <div className="form-group">
             <label className="form-label">Shipping address</label>
             <input className="input-field" value={form.shipping_address}
               onChange={(e) => setForm({ ...form, shipping_address: e.target.value })}
               placeholder="Street, city…" />
           </div>
-
           <div className="form-group">
             <label className="form-label">Notes</label>
             <input className="input-field" value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
               placeholder="Optional notes…" />
           </div>
-
           <label className="form-label">Line items</label>
           {form.items.map((item, i) => (
             <div className="grid-3" key={i} style={{ alignItems: "end" }}>
@@ -536,7 +492,6 @@ export function Orders() {
           <button className="btn btn-secondary" style={{ display: "inline-flex", alignItems: "center", gap: 6 }} onClick={addItemRow}>
             <FiPlus /> Add product
           </button>
-
           <div style={{ textAlign: "right", marginTop: 16, lineHeight: 1.8 }}>
             <div>Subtotal: <strong>${formSubtotal.toFixed(2)}</strong></div>
             <div>Discount: <strong>−${formDiscount.toFixed(2)}</strong></div>
@@ -555,12 +510,7 @@ export function Orders() {
           {showDetail.notes && <p><strong>Notes:</strong> {showDetail.notes}</p>}
           <table style={{ width: "100%", marginTop: 16 }}>
             <thead>
-              <tr>
-                <th>Product</th>
-                <th>Qty</th>
-                <th>Unit price</th>
-                <th>Subtotal</th>
-              </tr>
+              <tr><th>Product</th><th>Qty</th><th>Unit price</th><th>Subtotal</th></tr>
             </thead>
             <tbody>
               {showDetail.items.map(item => (
@@ -575,15 +525,15 @@ export function Orders() {
           </table>
           <div style={{ textAlign: "right", marginTop: 12, lineHeight: 1.8 }}>
             <div>Subtotal: ${Number(showDetail.subtotal).toFixed(2)}</div>
-            <div>
-              Discount: {showDetail.discount_type === "percent"
-                ? `${Number(showDetail.discount_value)}%`
-                : `$${Number(showDetail.discount_value).toFixed(2)}`}
+            <div>Discount: {showDetail.discount_type === "percent"
+              ? `${Number(showDetail.discount_value)}%`
+              : `$${Number(showDetail.discount_value).toFixed(2)}`}
             </div>
             <div style={{ fontWeight: 700 }}>Total: ${Number(showDetail.total).toFixed(2)}</div>
           </div>
           <div style={{ textAlign: "right", marginTop: 12 }}>
-            <button className="btn btn-secondary" style={{ display: "inline-flex", alignItems: "center", gap: 6 }} onClick={() => printInvoice(showDetail)}>
+            <button className="btn btn-secondary" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+              onClick={() => printInvoice(showDetail)}>
               <FiPrinter /> Print / Download PDF
             </button>
           </div>
@@ -597,7 +547,7 @@ export function Orders() {
             <button className="btn btn-danger" onClick={handleDelete}>Delete</button>
           </>}
         >
-          <p>Are you sure you want to delete <strong>{showDelete.invoice_number}</strong>? This action cannot be undone.</p>
+          <p>Are you sure you want to delete <strong>{showDelete.invoice_number}</strong>? This cannot be undone.</p>
         </Modal>
       )}
     </div>

@@ -2,7 +2,7 @@ export const STAFF_PAGES = ["dashboard", "products", "categories", "inventory", 
 
 export const BOSS_EXTRA_PAGES = ["suppliers", "purchase-orders", "notifications", "audit", "users"];
 
-export const SUPER_ADMIN_PAGES = ["platform-companies", "platform-users", "platform-audit"];
+export const SUPER_ADMIN_PAGES = ["platform-companies", "platform-users", "platform-audit", "notifications"];
 
 export function isSuperAdmin(user) {
   return !!user && (user.role === "super_admin" || (user.is_superuser && user.role === "super_admin"));

@@ -57,7 +57,12 @@ export function Sidebar({ current, onSelect, unreadCount = 0 }) {
       {/* Regular nav */}
       <div className="sidebar-section">
         <div className="sidebar-section-label">Menu</div>
-        {NAV.filter(item => canAccess(user, item.id)).map(item => (
+        {NAV.filter(item => {
+          // Hide notifications from regular menu for super admin
+          // (it moves to Platform section instead)
+          if (superAdmin && item.id === 'notifications') return false;
+          return canAccess(user, item.id);
+        }).map(item => (
           <button
             key={item.id}
             className={`nav-item ${current === item.id ? "active" : ""}`}
@@ -84,6 +89,9 @@ export function Sidebar({ current, onSelect, unreadCount = 0 }) {
             >
               <span className="nav-icon">{item.icon && <item.icon />}</span>
               {item.label}
+              {item.id === "notifications" && unreadCount > 0 && (
+                <span className="nav-badge">{unreadCount}</span>
+              )}
             </button>
           ))}
         </div>
@@ -99,7 +107,6 @@ export function Sidebar({ current, onSelect, unreadCount = 0 }) {
             }}>
               {displayName.charAt(0).toUpperCase()}
             </div>
-            {/* Small company badge on avatar */}
             {companyName && (
               <div style={{
                 position: "absolute", bottom: -2, right: -2,
