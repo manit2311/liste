@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { companyAPI } from '../../api/companies';
 import { Modal } from '../../components/common/Modal';
-import { FiPlus, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiPlus, FiEye, FiEyeOff, FiUserX, FiUserCheck } from 'react-icons/fi';
 
 const emptyForm = { name: "", slug: "", is_active: true };
 
@@ -142,15 +142,11 @@ export function PlatformCompanies() {
                         className="action-btn"
                         title={company.is_active ? "Deactivate company" : "Activate company"}
                         onClick={() => toggleActive(company)}
-                        style={{
-                          background: company.is_active ? '#fde8e8' : '#e8f8ee',
-                          color: company.is_active ? '#c0392b' : '#2c8a4d',
-                          border: `1px solid ${company.is_active ? '#fca5a5' : '#86efac'}`,
-                          borderRadius: 6, padding: "4px 10px",
-                          fontSize: 12, fontWeight: 600, cursor: "pointer",
-                        }}
                       >
-                        {company.is_active ? "Deactivate" : "Activate"}
+                        {company.is_active
+                          ? <FiUserX size={15} color="#e84e7a" />
+                          : <FiUserCheck size={15} color="#2c8a4d" />
+                        }
                       </button>
                     </div>
                   </td>
