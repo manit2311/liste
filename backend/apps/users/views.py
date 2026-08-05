@@ -130,8 +130,11 @@ class UserViewSet(CompanyScopedMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        # Super admin sees ALL users across ALL companies including private
         if hasattr(user, 'role') and user.role == 'super_admin':
+            # Filter by selected company_id param if provided
+            company_id = self.request.query_params.get('company_id')
+            if company_id:
+                return User.objects.filter(company_id=company_id).order_by('-id')
             return User.objects.all().order_by('-id')
         # Boss/Staff sees only their own company's users
         return super().get_queryset()

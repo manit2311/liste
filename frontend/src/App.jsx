@@ -39,7 +39,14 @@ const PAGE_MAP = {
   'platform-audit': PlatformAudit,
 };
 
-const PLATFORM_PAGES = ['platform-companies', 'platform-users', 'platform-audit'];
+// These pages are never blurred even when company is private
+const PLATFORM_PAGES = [
+  'platform-companies',
+  'platform-users',
+  'platform-audit',
+  'notifications',
+  'users',
+];
 
 export default function App() {
   const [page, setPage] = useState('dashboard');
@@ -96,7 +103,6 @@ export default function App() {
         </div>
       ) : isPrivatePage ? (
         <div style={{ position: "relative", minHeight: "80vh" }}>
-          {/* Blurred page content */}
           <div style={{
             filter: "blur(8px)",
             pointerEvents: "none",
@@ -105,8 +111,6 @@ export default function App() {
           }}>
             <PageComponent setPage={setPage} />
           </div>
-
-          {/* Overlay */}
           <div style={{
             position: "absolute",
             top: 0, left: 0, right: 0, bottom: 0,
