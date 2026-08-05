@@ -41,7 +41,6 @@ export function PlatformCompanies() {
   };
 
   const toggleActive = async (c) => {
-    const action = c.is_active ? "deactivate" : "activate";
     if (!window.confirm(
       `${c.is_active ? "Deactivate" : "Activate"} ${c.name}?` +
       (c.is_active ? " All users of this company will be blocked from logging in." : "")
@@ -94,11 +93,11 @@ export function PlatformCompanies() {
                   </td>
                 </tr>
               )}
-              {companies.map(c => (
-                <tr key={c.id}>
+              {companies.map(company => (
+                <tr key={company.id}>
                   <td style={{ fontWeight: 600 }}>
-                    {c.name}
-                    {c.is_private && (
+                    {company.name}
+                    {company.is_private && (
                       <span style={{
                         marginLeft: 8, fontSize: 10,
                         background: "#fde8e8", color: "#c0392b",
@@ -108,20 +107,20 @@ export function PlatformCompanies() {
                       </span>
                     )}
                   </td>
-                  <td style={{ fontSize: 12.5, color: "#a87c9e" }}>{c.slug}</td>
+                  <td style={{ fontSize: 12.5, color: "#a87c9e" }}>{company.slug}</td>
                   <td>
-                    <span className="badge badge-pink">{c.user_count ?? 0} users</span>
+                    <span className="badge badge-pink">{company.user_count ?? 0} users</span>
                   </td>
                   <td style={{ fontSize: 12.5 }}>
-                    {String(c.created_at).slice(0, 10)}
+                    {String(company.created_at).slice(0, 10)}
                   </td>
                   <td>
-                    <span className={`badge ${c.is_active ? "badge-pink" : "badge-blue"}`}>
-                      {c.is_active ? "Active" : "Inactive"}
+                    <span className={`badge ${company.is_active ? "badge-pink" : "badge-blue"}`}>
+                      {company.is_active ? "Active" : "Inactive"}
                     </span>
                   </td>
                   <td>
-                    {c.is_private ? (
+                    {company.is_private ? (
                       <span style={{
                         fontSize: 12, color: "#c0392b",
                         display: "flex", alignItems: "center", gap: 4
@@ -141,17 +140,17 @@ export function PlatformCompanies() {
                     <div className="actions-cell">
                       <button
                         className="action-btn"
-                        title={c.is_active ? "Deactivate company" : "Activate company"}
-                        onClick={() => toggleActive(c)}
+                        title={company.is_active ? "Deactivate company" : "Activate company"}
+                        onClick={() => toggleActive(company)}
                         style={{
-                          background: c.is_active ? '#fde8e8' : '#e8f8ee',
-                          color: c.is_active ? '#c0392b' : '#2c8a4d',
-                          border: `1px solid ${c.is_active ? '#fca5a5' : '#86efac'}`,
+                          background: company.is_active ? '#fde8e8' : '#e8f8ee',
+                          color: company.is_active ? '#c0392b' : '#2c8a4d',
+                          border: `1px solid ${company.is_active ? '#fca5a5' : '#86efac'}`,
                           borderRadius: 6, padding: "4px 10px",
                           fontSize: 12, fontWeight: 600, cursor: "pointer",
                         }}
                       >
-                        {c.is_active ? "Deactivate" : "Activate"}
+                        {company.is_active ? "Deactivate" : "Activate"}
                       </button>
                     </div>
                   </td>
@@ -163,24 +162,24 @@ export function PlatformCompanies() {
       </div>
 
       {/* Blur cards for private companies */}
-      {companies.filter(c => c.is_private).length > 0 && (
+      {companies.filter(company => company.is_private).length > 0 && (
         <div style={{ marginTop: 20 }}>
           <h3 style={{ fontSize: 14, color: "#a87c9e", marginBottom: 12 }}>
-          {c.is_private && <span style={{ display: "inline-flex", alignItems: "center", gap: 3, marginLeft: 4 }}><FiLock size={10} /> Hidden</span>}
+            Companies that have hidden their data from you
           </h3>
           <div style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
             gap: 14
           }}>
-            {companies.filter(c => c.is_private).map(c => (
-              <div key={c.id} style={{
+            {companies.filter(company => company.is_private).map(company => (
+              <div key={company.id} style={{
                 background: "#fff", borderRadius: 12, padding: 20,
                 border: "1.5px solid #f0dcea",
                 position: "relative", overflow: "hidden"
               }}>
                 <div style={{ filter: "blur(4px)", userSelect: "none" }}>
-                  <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>{c.name}</div>
+                  <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 6 }}>{company.name}</div>
                   <div style={{ fontSize: 12, color: "#a87c9e" }}>Products: ████</div>
                   <div style={{ fontSize: 12, color: "#a87c9e" }}>Orders: ████</div>
                   <div style={{ fontSize: 12, color: "#a87c9e" }}>Revenue: $████</div>
@@ -193,7 +192,7 @@ export function PlatformCompanies() {
                 }}>
                   <FiEyeOff size={24} color="#a87c9e" />
                   <div style={{ fontWeight: 600, color: "#a82d68", marginTop: 8, fontSize: 13 }}>
-                    {c.name}
+                    {company.name}
                   </div>
                   <div style={{
                     fontSize: 11, color: "#a87c9e",
