@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { companyAPI } from '../../api/companies';
 import { Modal } from '../../components/common/Modal';
-import {
-  FiBell, FiUser, FiAlertTriangle, FiEdit2, FiPackage,
-  FiArrowUp, FiArrowDown, FiEye, FiEyeOff, FiChevronDown, FiGlobe, FiLock
-} from 'react-icons/fi';
+import { FiPlus, FiEye, FiEyeOff } from 'react-icons/fi';
 
 const emptyForm = { name: "", slug: "", is_active: true };
 
