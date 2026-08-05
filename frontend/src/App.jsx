@@ -3,6 +3,7 @@ import { Lock } from 'lucide-react';
 import './styles/globals.css';
 import { useAuthStore } from './store/authStore';
 import { canAccess } from './constants/roles';
+import { CompanySettings } from './pages/company/CompanySettings';
 
 // Regular pages
 import { Login } from './pages/auth/Login';
@@ -40,6 +41,7 @@ const PAGE_MAP = {
   'platform-companies': PlatformCompanies,
   'platform-users': PlatformUsers,
   'platform-audit': PlatformAudit,
+  'company-settings': CompanySettings,
 };
 
 export default function App() {

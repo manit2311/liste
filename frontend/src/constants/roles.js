@@ -1,6 +1,6 @@
 export const STAFF_PAGES = ["dashboard", "products", "categories", "inventory", "orders", "warehouses", "purchase-orders"];
 
-export const BOSS_EXTRA_PAGES = ["suppliers", "purchase-orders", "notifications", "audit", "users"];
+export const BOSS_EXTRA_PAGES = ["suppliers", "purchase-orders", "notifications", "audit", "users", "company-settings"];
 
 export const SUPER_ADMIN_PAGES = ["platform-companies", "platform-users", "platform-audit"];
 
@@ -13,7 +13,7 @@ export function isBoss(user) {
 }
 
 export function canAccess(user, pageId) {
-  if (isSuperAdmin(user)) return true; // super admin sees everything
-  if (isBoss(user)) return !SUPER_ADMIN_PAGES.includes(pageId); // boss sees everything except platform pages
-  return STAFF_PAGES.includes(pageId); // staff sees only their 6 pages
+  if (isSuperAdmin(user)) return true;
+  if (isBoss(user)) return !SUPER_ADMIN_PAGES.includes(pageId);
+  return STAFF_PAGES.includes(pageId);
 }
