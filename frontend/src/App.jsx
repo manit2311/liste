@@ -4,8 +4,6 @@ import './styles/globals.css';
 import { useAuthStore } from './store/authStore';
 import { canAccess } from './constants/roles';
 
-
-// Regular pages
 import { Login } from './pages/auth/Login';
 import { Dashboard } from './pages/dashboard/Dashboard';
 import { Products } from './pages/products/Products';
@@ -18,12 +16,9 @@ import { Warehouses } from './pages/warehouses/Warehouses';
 import { Notifications } from './pages/notifications/Notifications';
 import { AuditLog } from './pages/audit/AuditLog';
 import { UserManagement } from './pages/users/UserManagement';
-
-// Platform pages (super admin only)
 import { PlatformCompanies } from './pages/platform/PlatformCompanies';
 import { PlatformUsers } from './pages/platform/PlatformUsers';
 import { PlatformAudit } from './pages/platform/PlatformAudit';
-
 import { Layout } from './components/layout/Layout';
 
 const PAGE_MAP = {
@@ -46,10 +41,18 @@ const PAGE_MAP = {
 export default function App() {
   const [page, setPage] = useState('dashboard');
   const [loading, setLoading] = useState(true);
+  const [companyKey, setCompanyKey] = useState(0);
   const { isAuthenticated, checkAuth, user } = useAuthStore();
 
   useEffect(() => {
     checkAuth().then(() => setLoading(false));
+  }, []);
+
+  // Listen for company switch event → remount all pages to refresh data
+  useEffect(() => {
+    const handler = () => setCompanyKey(k => k + 1);
+    window.addEventListener('company-changed', handler);
+    return () => window.removeEventListener('company-changed', handler);
   }, []);
 
   if (loading) {
@@ -69,7 +72,7 @@ export default function App() {
   const PageComponent = PAGE_MAP[page] || Dashboard;
 
   return (
-    <Layout page={page} onPageChange={setPage}>
+    <Layout key={companyKey} page={page} onPageChange={setPage}>
       {allowed ? (
         <PageComponent setPage={setPage} />
       ) : (

@@ -1,9 +1,15 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
-export const useCompanyStore = create((set) => ({
-  companies: [],
-  selectedCompanyId: null, // null = all companies (super admin default)
-  setCompanies: (companies) => set({ companies }),
-  setSelectedCompany: (id) => set({ selectedCompanyId: id }),
-  reset: () => set({ companies: [], selectedCompanyId: null }),
-}));
+export const useCompanyStore = create(
+  persist(
+    (set) => ({
+      companies: [],
+      selectedCompanyId: null,
+      setCompanies: (companies) => set({ companies }),
+      setSelectedCompany: (id) => set({ selectedCompanyId: id }),
+      reset: () => set({ companies: [], selectedCompanyId: null }),
+    }),
+    { name: 'company-store' }
+  )
+);

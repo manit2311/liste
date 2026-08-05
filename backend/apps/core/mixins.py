@@ -1,9 +1,4 @@
 class CompanyScopedMixin:
-    """
-    Filters querysets to request.user.company.
-    Super admins see all UNLESS a company is marked is_private=True.
-    """
-
     def get_company(self):
         user = self.request.user
         if hasattr(user, 'company'):
@@ -16,13 +11,21 @@ class CompanyScopedMixin:
     def get_queryset(self):
         qs = super().get_queryset()
         if self.is_super_admin():
-            # Super admin sees all companies EXCEPT private ones
-            # Exclude data from companies that set is_private=True
+            # Super admin can filter by company via ?company_id= query param
+            company_id = self.request.query_params.get('company_id')
+            if company_id:
+                from apps.companies.models import Company
+                try:
+                    company = Company.objects.get(id=company_id)
+                    if company.is_private:
+                        return qs.none()
+                    return qs.filter(company=company)
+                except Company.DoesNotExist:
+                    return qs.none()
+            # No filter = see all non-private companies
             from apps.companies.models import Company
-            private_companies = Company.objects.filter(is_private=True).values_list('id', flat=True)
-            if private_companies:
-                return qs.exclude(company_id__in=private_companies)
-            return qs
+            private_ids = Company.objects.filter(is_private=True).values_list('id', flat=True)
+            return qs.exclude(company_id__in=private_ids)
         company = self.get_company()
         if company:
             return qs.filter(company=company)

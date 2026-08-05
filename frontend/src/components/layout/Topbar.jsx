@@ -26,11 +26,12 @@ export function Topbar({ page, onSearch, onNavigate }) {
   const [showNotifs, setShowNotifs] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
-  const [showCompanySwitcher, setShowCompanySwitcher] = useState(false);
+  const [showSwitcher, setShowSwitcher] = useState(false);
   const [unreadList, setUnreadList] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [myCompany, setMyCompany] = useState(null);
   const [savingPrivacy, setSavingPrivacy] = useState(false);
+  const [switching, setSwitching] = useState(false);
 
   const profileRef = useRef(null);
   const notifRef = useRef(null);
@@ -71,19 +72,12 @@ export function Topbar({ page, onSearch, onNavigate }) {
       const data = response.data;
       const list = Array.isArray(data) ? data : data.results ?? [];
       setCompanies(list);
-
-      if (superAdmin) {
-        // Super admin defaults to first company
-        if (!selectedCompanyId && list.length > 0) {
-          setSelectedCompany(list[0].id);
-        }
-      } else if (boss && !superAdmin) {
-        // Boss — find their own company
-        const mine = list.find(c =>
-          c.name === user?.company_name ||
-          (user?.company_name && c.name === user.company_name)
-        );
-        setMyCompany(mine || list[0] || null);
+      if (superAdmin && !selectedCompanyId && list.length > 0) {
+        setSelectedCompany(list[0].id);
+      }
+      if (boss && !superAdmin) {
+        const mine = list.find(c => c.name === user?.company_name) || list[0] || null;
+        setMyCompany(mine);
       }
     } catch (error) {
       console.log(error);
@@ -105,7 +99,7 @@ export function Topbar({ page, onSearch, onNavigate }) {
       if (profileRef.current && !profileRef.current.contains(e.target)) setShowProfile(false);
       if (notifRef.current && !notifRef.current.contains(e.target)) setShowNotifs(false);
       if (privacyRef.current && !privacyRef.current.contains(e.target)) setShowPrivacy(false);
-      if (switcherRef.current && !switcherRef.current.contains(e.target)) setShowCompanySwitcher(false);
+      if (switcherRef.current && !switcherRef.current.contains(e.target)) setShowSwitcher(false);
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -126,14 +120,22 @@ export function Topbar({ page, onSearch, onNavigate }) {
     try {
       await companyAPI.update(myCompany.id, { is_private: !myCompany.is_private });
       setMyCompany({ ...myCompany, is_private: !myCompany.is_private });
-      // Refresh companies list
       loadCompanies();
     } catch (error) {
-      console.log(error);
       alert("Failed to update privacy setting.");
     } finally {
       setSavingPrivacy(false);
     }
+  };
+
+  const handleSwitchCompany = (id) => {
+    setShowSwitcher(false);
+    setSwitching(true);
+    setSelectedCompany(id);
+    setTimeout(() => {
+      window.dispatchEvent(new Event('company-changed'));
+      setSwitching(false);
+    }, 2500);
   };
 
   const selectedCompany = companies.find(c => c.id === selectedCompanyId);
@@ -151,9 +153,32 @@ export function Topbar({ page, onSearch, onNavigate }) {
     <header className="topbar">
       <span className="page-title">{pageTitle[page] || "listé"}</span>
       <div style={{ marginLeft: "auto" }} />
+
+      {/* Loading overlay when switching company */}
+      {switching && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 9999,
+          background: "rgba(248,239,246,0.85)",
+          display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center",
+          backdropFilter: "blur(4px)",
+        }}>
+          <div style={{
+            width: 48, height: 48, borderRadius: "50%",
+            border: "4px solid #f0dcea",
+            borderTop: "4px solid #c9407f",
+            animation: "spin 0.8s linear infinite",
+          }} />
+          <div style={{ marginTop: 16, fontSize: 15, fontWeight: 600, color: "#a82d68" }}>
+            Loading {selectedCompany?.name || "company"} data…
+          </div>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
+      )}
+
       <div className="topbar-actions">
 
-        {/* ── BOSS: Privacy toggle button ── */}
+        {/* Boss — Privacy toggle */}
         {boss && !superAdmin && myCompany && (
           <div style={{ position: "relative" }} ref={privacyRef}>
             <button
@@ -188,7 +213,6 @@ export function Topbar({ page, onSearch, onNavigate }) {
                   <div style={{ fontSize: 13, fontWeight: 700, color: "#2c1a26" }}>{myCompany.name}</div>
                   <div style={{ fontSize: 11, color: "#a87c9e", marginTop: 2 }}>Super Admin data access</div>
                 </div>
-
                 <div style={{ padding: "12px 16px", borderBottom: "1px solid #f8eef5" }}>
                   <div style={{
                     display: "flex", alignItems: "center", gap: 8,
@@ -213,7 +237,6 @@ export function Topbar({ page, onSearch, onNavigate }) {
                     </div>
                   </div>
                 </div>
-
                 <div style={{ padding: "12px 16px" }}>
                   <button
                     onClick={() => { togglePrivacy(); setShowPrivacy(false); }}
@@ -241,35 +264,33 @@ export function Topbar({ page, onSearch, onNavigate }) {
           </div>
         )}
 
-        {/* ── SUPER ADMIN: Company switcher ── */}
+        {/* Super Admin — Company switcher */}
         {superAdmin && companies.length > 0 && (
           <div style={{ position: "relative" }} ref={switcherRef}>
             <button
-              onClick={() => setShowCompanySwitcher(v => !v)}
+              onClick={() => setShowSwitcher(v => !v)}
               style={{
                 display: "inline-flex", alignItems: "center", gap: 6,
                 padding: "5px 12px", borderRadius: 20,
                 border: "1.5px solid #f0dcea",
-                background: "#fdf8fc",
-                color: "#a82d68",
+                background: "#fdf8fc", color: "#a82d68",
                 fontSize: 12.5, fontWeight: 600, cursor: "pointer",
-                transition: "all 0.15s",
               }}
             >
               <FiGlobe size={13} />
               {selectedCompany ? selectedCompany.name : "All Companies"}
               <FiChevronDown size={11} style={{
-                transform: showCompanySwitcher ? 'rotate(180deg)' : 'rotate(0)',
+                transform: showSwitcher ? 'rotate(180deg)' : 'rotate(0)',
                 transition: 'transform 0.15s'
               }} />
             </button>
 
-            {showCompanySwitcher && (
+            {showSwitcher && (
               <div style={{
                 position: "absolute", top: "calc(100% + 8px)", right: 0,
                 background: "#fff", borderRadius: 12,
                 boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
-                minWidth: 220, zIndex: 100, overflow: "hidden",
+                minWidth: 230, zIndex: 100, overflow: "hidden",
                 border: "1px solid #f0dcea",
               }}>
                 <div style={{ padding: "10px 14px", borderBottom: "1px solid #f8eef5" }}>
@@ -277,11 +298,10 @@ export function Topbar({ page, onSearch, onNavigate }) {
                     VIEW COMPANY DATA
                   </div>
                 </div>
-
-                {companies.map((c, i) => (
+                {companies.map(c => (
                   <div
                     key={c.id}
-                    onClick={() => { setSelectedCompany(c.id); setShowCompanySwitcher(false); }}
+                    onClick={() => handleSwitchCompany(c.id)}
                     style={{
                       padding: "10px 16px", cursor: "pointer",
                       background: selectedCompanyId === c.id ? '#fdf0f7' : '#fff',
@@ -302,7 +322,7 @@ export function Topbar({ page, onSearch, onNavigate }) {
                       </div>
                     </div>
                     {selectedCompanyId === c.id && (
-                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#c9407f" }} />
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#c9407f", flexShrink: 0 }} />
                     )}
                   </div>
                 ))}
@@ -313,10 +333,7 @@ export function Topbar({ page, onSearch, onNavigate }) {
 
         {/* Bell */}
         <div style={{ position: "relative" }} ref={notifRef}>
-          <button
-            className="icon-btn"
-            onClick={() => { if (!showNotifs) loadUnread(); setShowNotifs(v => !v); }}
-          >
+          <button className="icon-btn" onClick={() => { if (!showNotifs) loadUnread(); setShowNotifs(v => !v); }}>
             <FiBell />
             {unreadCount > 0 && <div className="notif-dot" />}
           </button>
@@ -327,9 +344,7 @@ export function Topbar({ page, onSearch, onNavigate }) {
                 {unreadCount > 0 && <span className="badge badge-red">{unreadCount} new</span>}
               </div>
               {unreadList.length === 0 && (
-                <div style={{ padding: 16, fontSize: 13, color: "#a87c9e", textAlign: "center" }}>
-                  You're all caught up!
-                </div>
+                <div style={{ padding: 16, fontSize: 13, color: "#a87c9e", textAlign: "center" }}>You're all caught up!</div>
               )}
               {unreadList.map(n => (
                 <div key={n.id} className="notif-item" onClick={() => clickBellItem(n)} style={{ cursor: "pointer" }}>
@@ -382,7 +397,6 @@ export function Topbar({ page, onSearch, onNavigate }) {
             </div>
           )}
         </div>
-
       </div>
     </header>
   );
