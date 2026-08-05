@@ -32,7 +32,6 @@ class LoginView(APIView):
         password = request.data.get("password")
         user = authenticate(username=username, password=password)
         if user:
-            # Feature 1 — block login if company is inactive
             if user.company and not user.company.is_active:
                 return Response(
                     {"error": "Your company account has been deactivated. Please contact the platform administrator."},
@@ -128,6 +127,14 @@ class UserViewSet(CompanyScopedMixin, viewsets.ModelViewSet):
     permission_classes = [IsBoss]
     serializer_class = ManageUserSerializer
     queryset = User.objects.all().order_by('-id')
+
+    def get_queryset(self):
+        user = self.request.user
+        # Super admin sees ALL users across ALL companies including private
+        if hasattr(user, 'role') and user.role == 'super_admin':
+            return User.objects.all().order_by('-id')
+        # Boss/Staff sees only their own company's users
+        return super().get_queryset()
 
     def perform_create(self, serializer):
         password = self.request.data.get("password", "")
