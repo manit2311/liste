@@ -2,8 +2,8 @@ import axiosInstance from './axios';
 
 export const companyAPI = {
   getAll: () => axiosInstance.get('/companies/'),
+  getById: (id) => axiosInstance.get(`/companies/${id}/`),
   create: (data) => axiosInstance.post('/companies/', data),
   update: (id, data) => axiosInstance.patch(`/companies/${id}/`, data),
   delete: (id) => axiosInstance.delete(`/companies/${id}/`),
-  togglePrivacy: (id, is_private) => axiosInstance.patch(`/companies/${id}/`, { is_private }),
 };

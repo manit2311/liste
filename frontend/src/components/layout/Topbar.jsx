@@ -2,8 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { notificationAPI } from '../../api/notifications';
 import { companyAPI } from '../../api/companies';
 import { useAuthStore } from '../../store/authStore';
+import { useCompanyStore } from '../../store/companyStore';
 import { isBoss, isSuperAdmin } from '../../constants/roles';
-import { FiBell, FiUser, FiAlertTriangle, FiEdit2, FiPackage, FiArrowUp, FiArrowDown, FiEye, FiEyeOff, FiChevronDown } from 'react-icons/fi';
+import {
+  FiBell, FiUser, FiAlertTriangle, FiEdit2, FiPackage,
+  FiArrowUp, FiArrowDown, FiEye, FiEyeOff, FiChevronDown, FiGlobe
+} from 'react-icons/fi';
 
 const TYPE_ICONS = {
   login: <FiUser />, low_stock: <FiAlertTriangle />, edit: <FiEdit2 />,
@@ -22,26 +26,30 @@ export function Topbar({ page, onSearch, onNavigate }) {
   const [showNotifs, setShowNotifs] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
+  const [showCompanySwitcher, setShowCompanySwitcher] = useState(false);
   const [unreadList, setUnreadList] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [company, setCompany] = useState(null);
+  const [myCompany, setMyCompany] = useState(null);
   const [savingPrivacy, setSavingPrivacy] = useState(false);
 
   const profileRef = useRef(null);
   const notifRef = useRef(null);
   const privacyRef = useRef(null);
+  const switcherRef = useRef(null);
 
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const boss = isBoss(user);
   const superAdmin = isSuperAdmin(user);
 
+  const { companies, selectedCompanyId, setCompanies, setSelectedCompany } = useCompanyStore();
+
   const ROLE_DISPLAY = {
     super_admin: "Super Admin",
     admin: "Boss",
     staff: "Supervisor",
   };
-  const displayName = user?.username || user?.email || 'User';
+  const displayName = user?.username || 'User';
   const displayRole = ROLE_DISPLAY[user?.role] || user?.role || 'Staff';
 
   const loadUnread = async () => {
@@ -57,14 +65,26 @@ export function Topbar({ page, onSearch, onNavigate }) {
     }
   };
 
-  const loadCompany = async () => {
-    if (!boss || superAdmin) return;
+  const loadCompanies = async () => {
     try {
       const response = await companyAPI.getAll();
       const data = response.data;
-      const companies = Array.isArray(data) ? data : data.results ?? [];
-      const mine = companies.find(c => c.name === user?.company_name);
-      setCompany(mine || null);
+      const list = Array.isArray(data) ? data : data.results ?? [];
+      setCompanies(list);
+
+      if (superAdmin) {
+        // Super admin defaults to first company
+        if (!selectedCompanyId && list.length > 0) {
+          setSelectedCompany(list[0].id);
+        }
+      } else if (boss && !superAdmin) {
+        // Boss — find their own company
+        const mine = list.find(c =>
+          c.name === user?.company_name ||
+          (user?.company_name && c.name === user.company_name)
+        );
+        setMyCompany(mine || list[0] || null);
+      }
     } catch (error) {
       console.log(error);
     }
@@ -77,7 +97,7 @@ export function Topbar({ page, onSearch, onNavigate }) {
   }, []);
 
   useEffect(() => {
-    loadCompany();
+    if (user) loadCompanies();
   }, [user]);
 
   useEffect(() => {
@@ -85,6 +105,7 @@ export function Topbar({ page, onSearch, onNavigate }) {
       if (profileRef.current && !profileRef.current.contains(e.target)) setShowProfile(false);
       if (notifRef.current && !notifRef.current.contains(e.target)) setShowNotifs(false);
       if (privacyRef.current && !privacyRef.current.contains(e.target)) setShowPrivacy(false);
+      if (switcherRef.current && !switcherRef.current.contains(e.target)) setShowCompanySwitcher(false);
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -100,33 +121,29 @@ export function Topbar({ page, onSearch, onNavigate }) {
   };
 
   const togglePrivacy = async () => {
-    if (!company) return;
+    if (!myCompany) return;
     setSavingPrivacy(true);
     try {
-      await companyAPI.update(company.id, { is_private: !company.is_private });
-      setCompany({ ...company, is_private: !company.is_private });
+      await companyAPI.update(myCompany.id, { is_private: !myCompany.is_private });
+      setMyCompany({ ...myCompany, is_private: !myCompany.is_private });
+      // Refresh companies list
+      loadCompanies();
     } catch (error) {
       console.log(error);
+      alert("Failed to update privacy setting.");
     } finally {
       setSavingPrivacy(false);
     }
   };
 
+  const selectedCompany = companies.find(c => c.id === selectedCompanyId);
+
   const pageTitle = {
-    dashboard: "Dashboard",
-    products: "Products",
-    categories: "Categories",
-    suppliers: "Suppliers",
-    inventory: "Inventory",
-    orders: "Orders",
-    "purchase-orders": "Purchase orders",
-    warehouses: "Warehouses",
-    notifications: "Notifications",
-    audit: "Audit log",
-    users: "User management",
-    "company-settings": "Company Settings",
-    "platform-companies": "Companies",
-    "platform-users": "Platform Users",
+    dashboard: "Dashboard", products: "Products", categories: "Categories",
+    suppliers: "Suppliers", inventory: "Inventory", orders: "Orders",
+    "purchase-orders": "Purchase orders", warehouses: "Warehouses",
+    notifications: "Notifications", audit: "Audit log", users: "User management",
+    "platform-companies": "Companies", "platform-users": "Platform Users",
     "platform-audit": "Platform Audit",
   };
 
@@ -136,23 +153,23 @@ export function Topbar({ page, onSearch, onNavigate }) {
       <div style={{ marginLeft: "auto" }} />
       <div className="topbar-actions">
 
-        {/* Company Privacy Toggle — Boss only */}
-        {boss && !superAdmin && company && (
+        {/* ── BOSS: Privacy toggle button ── */}
+        {boss && !superAdmin && myCompany && (
           <div style={{ position: "relative" }} ref={privacyRef}>
             <button
               onClick={() => setShowPrivacy(v => !v)}
               style={{
                 display: "inline-flex", alignItems: "center", gap: 6,
-                padding: "6px 12px", borderRadius: 20,
-                border: `1.5px solid ${company.is_private ? '#fde8e8' : '#f0dcea'}`,
-                background: company.is_private ? '#fff8f8' : '#fdf8fc',
-                color: company.is_private ? '#c0392b' : '#a82d68',
+                padding: "5px 12px", borderRadius: 20,
+                border: `1.5px solid ${myCompany.is_private ? '#fde8e8' : '#f0dcea'}`,
+                background: myCompany.is_private ? '#fff8f8' : '#fdf8fc',
+                color: myCompany.is_private ? '#c0392b' : '#a82d68',
                 fontSize: 12.5, fontWeight: 600, cursor: "pointer",
                 transition: "all 0.15s",
               }}
             >
-              {company.is_private ? <FiEyeOff size={13} /> : <FiEye size={13} />}
-              {user?.company_name || company.name}
+              {myCompany.is_private ? <FiEyeOff size={13} /> : <FiEye size={13} />}
+              {myCompany.name}
               <FiChevronDown size={11} style={{
                 transform: showPrivacy ? 'rotate(180deg)' : 'rotate(0)',
                 transition: 'transform 0.15s'
@@ -167,58 +184,50 @@ export function Topbar({ page, onSearch, onNavigate }) {
                 minWidth: 260, zIndex: 100, overflow: "hidden",
                 border: "1px solid #f0dcea",
               }}>
-                {/* Header */}
                 <div style={{ padding: "14px 16px", borderBottom: "1px solid #f8eef5" }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#2c1a26" }}>
-                    {company.name}
-                  </div>
-                  <div style={{ fontSize: 11, color: "#a87c9e", marginTop: 2 }}>
-                    Super Admin data access
-                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#2c1a26" }}>{myCompany.name}</div>
+                  <div style={{ fontSize: 11, color: "#a87c9e", marginTop: 2 }}>Super Admin data access</div>
                 </div>
 
-                {/* Current status */}
                 <div style={{ padding: "12px 16px", borderBottom: "1px solid #f8eef5" }}>
                   <div style={{
                     display: "flex", alignItems: "center", gap: 8,
                     padding: "10px 12px", borderRadius: 8,
-                    background: company.is_private ? '#fff8f8' : '#f0fdf4',
-                    border: `1px solid ${company.is_private ? '#fde8e8' : '#bbf7d0'}`,
+                    background: myCompany.is_private ? '#fff8f8' : '#f0fdf4',
+                    border: `1px solid ${myCompany.is_private ? '#fde8e8' : '#bbf7d0'}`,
                   }}>
-                    {company.is_private
+                    {myCompany.is_private
                       ? <FiEyeOff size={14} color="#c0392b" />
                       : <FiEye size={14} color="#2c8a4d" />
                     }
                     <div>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: company.is_private ? '#c0392b' : '#2c8a4d' }}>
-                        {company.is_private ? "Hidden from Super Admin" : "Visible to Super Admin"}
+                      <div style={{ fontSize: 12, fontWeight: 600, color: myCompany.is_private ? '#c0392b' : '#2c8a4d' }}>
+                        {myCompany.is_private ? "Hidden from Super Admin" : "Visible to Super Admin"}
                       </div>
                       <div style={{ fontSize: 11, color: "#a87c9e", marginTop: 1 }}>
-                        {company.is_private
-                          ? "Your data is blurred in the platform view"
-                          : "Super Admin can see your data"
+                        {myCompany.is_private
+                          ? "Super Admin sees a blurred placeholder"
+                          : "Super Admin can view your data"
                         }
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Toggle button */}
                 <div style={{ padding: "12px 16px" }}>
                   <button
                     onClick={() => { togglePrivacy(); setShowPrivacy(false); }}
                     disabled={savingPrivacy}
                     style={{
-                      width: "100%", padding: "9px 14px",
-                      borderRadius: 8, border: "none", cursor: "pointer",
-                      background: company.is_private ? '#e8f8ee' : '#fde8e8',
-                      color: company.is_private ? '#1e7a45' : '#c0392b',
+                      width: "100%", padding: "9px 14px", borderRadius: 8,
+                      border: "none", cursor: savingPrivacy ? "not-allowed" : "pointer",
+                      background: myCompany.is_private ? '#e8f8ee' : '#fde8e8',
+                      color: myCompany.is_private ? '#1e7a45' : '#c0392b',
                       fontSize: 13, fontWeight: 600,
                       display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                      transition: "all 0.15s",
                     }}
                   >
-                    {company.is_private
+                    {myCompany.is_private
                       ? <><FiEye size={13} /> Share with Super Admin</>
                       : <><FiEyeOff size={13} /> Hide from Super Admin</>
                     }
@@ -232,14 +241,81 @@ export function Topbar({ page, onSearch, onNavigate }) {
           </div>
         )}
 
+        {/* ── SUPER ADMIN: Company switcher ── */}
+        {superAdmin && companies.length > 0 && (
+          <div style={{ position: "relative" }} ref={switcherRef}>
+            <button
+              onClick={() => setShowCompanySwitcher(v => !v)}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                padding: "5px 12px", borderRadius: 20,
+                border: "1.5px solid #f0dcea",
+                background: "#fdf8fc",
+                color: "#a82d68",
+                fontSize: 12.5, fontWeight: 600, cursor: "pointer",
+                transition: "all 0.15s",
+              }}
+            >
+              <FiGlobe size={13} />
+              {selectedCompany ? selectedCompany.name : "All Companies"}
+              <FiChevronDown size={11} style={{
+                transform: showCompanySwitcher ? 'rotate(180deg)' : 'rotate(0)',
+                transition: 'transform 0.15s'
+              }} />
+            </button>
+
+            {showCompanySwitcher && (
+              <div style={{
+                position: "absolute", top: "calc(100% + 8px)", right: 0,
+                background: "#fff", borderRadius: 12,
+                boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+                minWidth: 220, zIndex: 100, overflow: "hidden",
+                border: "1px solid #f0dcea",
+              }}>
+                <div style={{ padding: "10px 14px", borderBottom: "1px solid #f8eef5" }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: "#a87c9e", letterSpacing: "0.05em" }}>
+                    VIEW COMPANY DATA
+                  </div>
+                </div>
+
+                {companies.map((c, i) => (
+                  <div
+                    key={c.id}
+                    onClick={() => { setSelectedCompany(c.id); setShowCompanySwitcher(false); }}
+                    style={{
+                      padding: "10px 16px", cursor: "pointer",
+                      background: selectedCompanyId === c.id ? '#fdf0f7' : '#fff',
+                      borderLeft: selectedCompanyId === c.id ? '3px solid #c9407f' : '3px solid transparent',
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                      transition: "background 0.12s",
+                    }}
+                    onMouseEnter={e => { if (selectedCompanyId !== c.id) e.currentTarget.style.background = '#fdf8fc'; }}
+                    onMouseLeave={e => { if (selectedCompanyId !== c.id) e.currentTarget.style.background = '#fff'; }}
+                  >
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: selectedCompanyId === c.id ? 600 : 400, color: selectedCompanyId === c.id ? '#c9407f' : '#2c1a26' }}>
+                        {c.name}
+                      </div>
+                      <div style={{ fontSize: 11, color: "#a87c9e", marginTop: 1 }}>
+                        {c.user_count ?? 0} users · {c.is_active ? "Active" : "Inactive"}
+                        {c.is_private && " · 🔒 Private"}
+                      </div>
+                    </div>
+                    {selectedCompanyId === c.id && (
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#c9407f" }} />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Bell */}
         <div style={{ position: "relative" }} ref={notifRef}>
           <button
             className="icon-btn"
-            onClick={() => {
-              if (!showNotifs) loadUnread();
-              setShowNotifs(v => !v);
-            }}
+            onClick={() => { if (!showNotifs) loadUnread(); setShowNotifs(v => !v); }}
           >
             <FiBell />
             {unreadCount > 0 && <div className="notif-dot" />}
@@ -257,9 +333,7 @@ export function Topbar({ page, onSearch, onNavigate }) {
               )}
               {unreadList.map(n => (
                 <div key={n.id} className="notif-item" onClick={() => clickBellItem(n)} style={{ cursor: "pointer" }}>
-                  <div className="notif-icon notif-icon-info">
-                    {TYPE_ICONS[n.notif_type] || <FiBell />}
-                  </div>
+                  <div className="notif-icon notif-icon-info">{TYPE_ICONS[n.notif_type] || <FiBell />}</div>
                   <div>
                     <div className="notif-text">{n.message}</div>
                     <div className="notif-time">{timeAgo(n.created_at)}</div>
@@ -267,11 +341,8 @@ export function Topbar({ page, onSearch, onNavigate }) {
                 </div>
               ))}
               <div style={{ padding: "10px 16px", textAlign: "center" }}>
-                <button
-                  className="btn btn-ghost"
-                  style={{ fontSize: 12 }}
-                  onClick={() => { setShowNotifs(false); onNavigate && onNavigate("notifications"); }}
-                >
+                <button className="btn btn-ghost" style={{ fontSize: 12 }}
+                  onClick={() => { setShowNotifs(false); onNavigate && onNavigate("notifications"); }}>
                   View all notifications
                 </button>
               </div>
@@ -295,7 +366,7 @@ export function Topbar({ page, onSearch, onNavigate }) {
                 <div className="avatar">{displayName.charAt(0).toUpperCase()}</div>
                 <div>
                   <div style={{ fontSize: 14, fontWeight: 600, color: "#2c1a26" }}>{displayName}</div>
-                  <div style={{ fontSize: 12, color: "#a87c9e", textTransform: "capitalize" }}>{displayRole}</div>
+                  <div style={{ fontSize: 12, color: "#a87c9e" }}>{displayRole}</div>
                 </div>
               </div>
               <button
