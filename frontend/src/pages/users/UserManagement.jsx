@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { userAPI } from '../../api/users';
 import { useAuthStore } from '../../store/authStore';
+import { useCompanyStore } from '../../store/companyStore';
+import { isSuperAdmin } from '../../constants/roles';
 import { Modal } from '../../components/common/Modal';
 import { StatusBadge } from '../../components/common/StatusBadge';
 import { FiPlus, FiSearch, FiEdit2, FiTrash2 } from 'react-icons/fi';
@@ -23,6 +25,9 @@ export function UserManagement() {
   const [form, setForm] = useState(emptyUser);
 
   const me = useAuthStore((s) => s.user);
+  const superAdmin = isSuperAdmin(me);
+  const { companies, selectedCompanyId } = useCompanyStore();
+  const selectedCompany = companies.find(c => c.id === selectedCompanyId);
 
   const loadUsers = async () => {
     try {
@@ -36,7 +41,7 @@ export function UserManagement() {
     }
   };
 
-  useEffect(() => { loadUsers(); }, []);
+  useEffect(() => { loadUsers(); }, [selectedCompanyId]);
 
   if (loading) return <h2>Loading...</h2>;
 
@@ -64,21 +69,11 @@ export function UserManagement() {
   };
 
   const handleSave = async () => {
-    if (!form.username.trim()) {
-      alert("Username is required.");
-      return;
-    }
-    if (!editingId && !form.password) {
-      alert("Password is required for a new user.");
-      return;
-    }
     try {
-      const payload = { ...form };
-      if (!payload.password) delete payload.password;
       if (editingId) {
-        await userAPI.update(editingId, payload);
+        await userAPI.update(editingId, form);
       } else {
-        await userAPI.create(payload);
+        await userAPI.create(form);
       }
       setShowAdd(false);
       setForm(emptyUser);
@@ -114,14 +109,22 @@ export function UserManagement() {
       <div className="page-intro">
         <div>
           <h1>User management</h1>
-          <p>Control who has access to the system and at what level.</p>
+          <p>
+            {superAdmin && selectedCompany
+              ? `Showing users of ${selectedCompany.name}`
+              : "Control who has access to the system and at what level."
+            }
+          </p>
         </div>
-        <button
-          className="btn btn-primary"
-          style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
-          onClick={openAdd}>
-          <FiPlus /> Add user
-        </button>
+        {/* Hide Add user button for super admin — they manage via Platform Users */}
+        {!superAdmin && (
+          <button
+            className="btn btn-primary"
+            style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+            onClick={openAdd}>
+            <FiPlus /> Add user
+          </button>
+        )}
       </div>
 
       <div className="card">
@@ -145,13 +148,13 @@ export function UserManagement() {
                 <th>Role</th>
                 <th>Created</th>
                 <th>Status</th>
-                <th>Actions</th>
+                {!superAdmin && <th>Actions</th>}
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} style={{ padding: 20, color: "#a87c9e" }}>
+                  <td colSpan={superAdmin ? 5 : 6} style={{ padding: 20, color: "#a87c9e" }}>
                     No users found.
                   </td>
                 </tr>
@@ -160,7 +163,12 @@ export function UserManagement() {
                 <tr key={u.id}>
                   <td>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div className="avatar">{u.username[0].toUpperCase()}</div>
+                      <div className="avatar" style={{
+                        background: u.role === 'super_admin' ? '#a82d68' :
+                          u.role === 'admin' ? '#c9407f' : '#a87c9e'
+                      }}>
+                        {u.username[0].toUpperCase()}
+                      </div>
                       <div>
                         <div style={{ fontWeight: 500, fontSize: 14 }}>
                           {u.username}
@@ -185,18 +193,20 @@ export function UserManagement() {
                     {u.created_at ? String(u.created_at).slice(0, 10) : "-"}
                   </td>
                   <td><StatusBadge status={u.is_active ? "active" : "inactive"} /></td>
-                  <td>
-                    <div className="actions-cell">
-                      <button className="action-btn" onClick={() => openEdit(u)} title="Edit">
-                        <FiEdit2 />
-                      </button>
-                      {(!me || u.id !== me.id) && (
-                        <button className="action-btn danger" onClick={() => setShowDelete(u)} title="Delete">
-                          <FiTrash2 />
+                  {!superAdmin && (
+                    <td>
+                      <div className="actions-cell">
+                        <button className="action-btn" onClick={() => openEdit(u)} title="Edit">
+                          <FiEdit2 />
                         </button>
-                      )}
-                    </div>
-                  </td>
+                        {(!me || u.id !== me.id) && (
+                          <button className="action-btn danger" onClick={() => setShowDelete(u)} title="Delete">
+                            <FiTrash2 />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -204,7 +214,7 @@ export function UserManagement() {
         </div>
       </div>
 
-      {showAdd && (
+      {showAdd && !superAdmin && (
         <Modal
           title={editingId ? "Edit user" : "Add user"}
           onClose={() => setShowAdd(false)}
@@ -262,7 +272,7 @@ export function UserManagement() {
         </Modal>
       )}
 
-      {showDelete && (
+      {showDelete && !superAdmin && (
         <Modal
           title="Remove user"
           onClose={() => setShowDelete(null)}
