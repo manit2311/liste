@@ -1,6 +1,6 @@
 export const STAFF_PAGES = ["dashboard", "products", "categories", "inventory", "orders", "warehouses", "purchase-orders"];
 
-export const BOSS_EXTRA_PAGES = ["suppliers", "purchase-orders", "notifications", "audit", "users", "company-settings"];
+export const BOSS_EXTRA_PAGES = ["suppliers", "purchase-orders", "notifications", "audit", "users"];
 
 export const SUPER_ADMIN_PAGES = ["platform-companies", "platform-users", "platform-audit"];
 

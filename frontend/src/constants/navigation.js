@@ -1,7 +1,7 @@
 import {
   FiGrid, FiPackage, FiTag, FiTruck, FiArchive,
   FiShoppingCart, FiFileText, FiHome, FiBell,
-  FiClipboard, FiUsers, FiGlobe, FiSettings
+  FiClipboard, FiUsers, FiGlobe
 } from 'react-icons/fi';
 
 export const NAV = [
@@ -16,7 +16,6 @@ export const NAV = [
   { id: "notifications",     label: "Notifications",      icon: FiBell },
   { id: "audit",             label: "Audit Log",          icon: FiClipboard },
   { id: "users",             label: "User Management",    icon: FiUsers },
-  { id: "company-settings",  label: "Company Settings",   icon: FiSettings },
 ];
 
 export const PLATFORM_NAV = [

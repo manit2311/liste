@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { notificationAPI } from '../../api/notifications';
+import { companyAPI } from '../../api/companies';
 import { useAuthStore } from '../../store/authStore';
-import { FiBell, FiUser, FiAlertTriangle, FiEdit2, FiPackage, FiArrowUp, FiArrowDown } from 'react-icons/fi';
+import { isBoss, isSuperAdmin } from '../../constants/roles';
+import { FiBell, FiUser, FiAlertTriangle, FiEdit2, FiPackage, FiArrowUp, FiArrowDown, FiEye, FiEyeOff, FiChevronDown } from 'react-icons/fi';
 
 const TYPE_ICONS = {
   login: <FiUser />, low_stock: <FiAlertTriangle />, edit: <FiEdit2 />,
@@ -19,19 +21,25 @@ function timeAgo(iso) {
 export function Topbar({ page, onSearch, onNavigate }) {
   const [showNotifs, setShowNotifs] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
   const [unreadList, setUnreadList] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [company, setCompany] = useState(null);
+  const [savingPrivacy, setSavingPrivacy] = useState(false);
 
   const profileRef = useRef(null);
   const notifRef = useRef(null);
+  const privacyRef = useRef(null);
 
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const boss = isBoss(user);
+  const superAdmin = isSuperAdmin(user);
 
   const ROLE_DISPLAY = {
-  super_admin: "Super Admin",
-  admin: "Boss",
-  staff: "Supervisor",
+    super_admin: "Super Admin",
+    admin: "Boss",
+    staff: "Supervisor",
   };
   const displayName = user?.username || user?.email || 'User';
   const displayRole = ROLE_DISPLAY[user?.role] || user?.role || 'Staff';
@@ -42,8 +50,21 @@ export function Topbar({ page, onSearch, onNavigate }) {
       const data = response.data;
       const list = Array.isArray(data) ? data : data.results ?? [];
       const count = Array.isArray(data) ? data.length : data.count ?? 0;
-      setUnreadList(list.slice(0, 4)); // newest 4 only
+      setUnreadList(list.slice(0, 4));
       setUnreadCount(count);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const loadCompany = async () => {
+    if (!boss || superAdmin) return;
+    try {
+      const response = await companyAPI.getAll();
+      const data = response.data;
+      const companies = Array.isArray(data) ? data : data.results ?? [];
+      const mine = companies.find(c => c.name === user?.company_name);
+      setCompany(mine || null);
     } catch (error) {
       console.log(error);
     }
@@ -55,15 +76,15 @@ export function Topbar({ page, onSearch, onNavigate }) {
     return () => clearInterval(timer);
   }, []);
 
-  // Close dropdowns when clicking outside
+  useEffect(() => {
+    loadCompany();
+  }, [user]);
+
   useEffect(() => {
     function handleClickOutside(e) {
-      if (profileRef.current && !profileRef.current.contains(e.target)) {
-        setShowProfile(false);
-      }
-      if (notifRef.current && !notifRef.current.contains(e.target)) {
-        setShowNotifs(false);
-      }
+      if (profileRef.current && !profileRef.current.contains(e.target)) setShowProfile(false);
+      if (notifRef.current && !notifRef.current.contains(e.target)) setShowNotifs(false);
+      if (privacyRef.current && !privacyRef.current.contains(e.target)) setShowPrivacy(false);
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -75,6 +96,19 @@ export function Topbar({ page, onSearch, onNavigate }) {
       loadUnread();
     } catch (error) {
       console.log(error);
+    }
+  };
+
+  const togglePrivacy = async () => {
+    if (!company) return;
+    setSavingPrivacy(true);
+    try {
+      await companyAPI.update(company.id, { is_private: !company.is_private });
+      setCompany({ ...company, is_private: !company.is_private });
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setSavingPrivacy(false);
     }
   };
 
@@ -90,17 +124,117 @@ export function Topbar({ page, onSearch, onNavigate }) {
     notifications: "Notifications",
     audit: "Audit log",
     users: "User management",
+    "company-settings": "Company Settings",
+    "platform-companies": "Companies",
+    "platform-users": "Platform Users",
+    "platform-audit": "Platform Audit",
   };
 
   return (
     <header className="topbar">
-  <span className="page-title">{pageTitle[page] || "listé"}</span>
+      <span className="page-title">{pageTitle[page] || "listé"}</span>
       <div style={{ marginLeft: "auto" }} />
       <div className="topbar-actions">
 
+        {/* Company Privacy Toggle — Boss only */}
+        {boss && !superAdmin && company && (
+          <div style={{ position: "relative" }} ref={privacyRef}>
+            <button
+              onClick={() => setShowPrivacy(v => !v)}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                padding: "6px 12px", borderRadius: 20,
+                border: `1.5px solid ${company.is_private ? '#fde8e8' : '#f0dcea'}`,
+                background: company.is_private ? '#fff8f8' : '#fdf8fc',
+                color: company.is_private ? '#c0392b' : '#a82d68',
+                fontSize: 12.5, fontWeight: 600, cursor: "pointer",
+                transition: "all 0.15s",
+              }}
+            >
+              {company.is_private ? <FiEyeOff size={13} /> : <FiEye size={13} />}
+              {user?.company_name || company.name}
+              <FiChevronDown size={11} style={{
+                transform: showPrivacy ? 'rotate(180deg)' : 'rotate(0)',
+                transition: 'transform 0.15s'
+              }} />
+            </button>
+
+            {showPrivacy && (
+              <div style={{
+                position: "absolute", top: "calc(100% + 8px)", right: 0,
+                background: "#fff", borderRadius: 12,
+                boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+                minWidth: 260, zIndex: 100, overflow: "hidden",
+                border: "1px solid #f0dcea",
+              }}>
+                {/* Header */}
+                <div style={{ padding: "14px 16px", borderBottom: "1px solid #f8eef5" }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#2c1a26" }}>
+                    {company.name}
+                  </div>
+                  <div style={{ fontSize: 11, color: "#a87c9e", marginTop: 2 }}>
+                    Super Admin data access
+                  </div>
+                </div>
+
+                {/* Current status */}
+                <div style={{ padding: "12px 16px", borderBottom: "1px solid #f8eef5" }}>
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 8,
+                    padding: "10px 12px", borderRadius: 8,
+                    background: company.is_private ? '#fff8f8' : '#f0fdf4',
+                    border: `1px solid ${company.is_private ? '#fde8e8' : '#bbf7d0'}`,
+                  }}>
+                    {company.is_private
+                      ? <FiEyeOff size={14} color="#c0392b" />
+                      : <FiEye size={14} color="#2c8a4d" />
+                    }
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: company.is_private ? '#c0392b' : '#2c8a4d' }}>
+                        {company.is_private ? "Hidden from Super Admin" : "Visible to Super Admin"}
+                      </div>
+                      <div style={{ fontSize: 11, color: "#a87c9e", marginTop: 1 }}>
+                        {company.is_private
+                          ? "Your data is blurred in the platform view"
+                          : "Super Admin can see your data"
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Toggle button */}
+                <div style={{ padding: "12px 16px" }}>
+                  <button
+                    onClick={() => { togglePrivacy(); setShowPrivacy(false); }}
+                    disabled={savingPrivacy}
+                    style={{
+                      width: "100%", padding: "9px 14px",
+                      borderRadius: 8, border: "none", cursor: "pointer",
+                      background: company.is_private ? '#e8f8ee' : '#fde8e8',
+                      color: company.is_private ? '#1e7a45' : '#c0392b',
+                      fontSize: 13, fontWeight: 600,
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    {company.is_private
+                      ? <><FiEye size={13} /> Share with Super Admin</>
+                      : <><FiEyeOff size={13} /> Hide from Super Admin</>
+                    }
+                  </button>
+                  <div style={{ fontSize: 11, color: "#a87c9e", marginTop: 8, lineHeight: 1.5, textAlign: "center" }}>
+                    Only affects Super Admin's platform view.<br />Your team is not affected.
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Bell */}
         <div style={{ position: "relative" }} ref={notifRef}>
-        <button
+          <button
             className="icon-btn"
             onClick={() => {
               if (!showNotifs) loadUnread();
@@ -114,17 +248,17 @@ export function Topbar({ page, onSearch, onNavigate }) {
             <div className="notification-panel">
               <div style={{ padding: "12px 16px", borderBottom: "1px solid #f0dcea", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span style={{ fontWeight: 600, fontSize: 14 }}>Notifications</span>
-                <span className="badge badge-red">{unreadCount} new</span>
+                {unreadCount > 0 && <span className="badge badge-red">{unreadCount} new</span>}
               </div>
               {unreadList.length === 0 && (
                 <div style={{ padding: 16, fontSize: 13, color: "#a87c9e", textAlign: "center" }}>
-                  You're all caught up !
+                  You're all caught up!
                 </div>
               )}
               {unreadList.map(n => (
                 <div key={n.id} className="notif-item" onClick={() => clickBellItem(n)} style={{ cursor: "pointer" }}>
                   <div className="notif-icon notif-icon-info">
-                  {TYPE_ICONS[n.notif_type] || <FiBell />}
+                    {TYPE_ICONS[n.notif_type] || <FiBell />}
                   </div>
                   <div>
                     <div className="notif-text">{n.message}</div>
@@ -133,11 +267,9 @@ export function Topbar({ page, onSearch, onNavigate }) {
                 </div>
               ))}
               <div style={{ padding: "10px 16px", textAlign: "center" }}>
-              <button
+                <button
                   className="btn btn-ghost"
-                  style={{ fontSize: 12, borderRadius: "var(--radius-lg)", transition: "background var(--transition-base), color var(--transition-base)" }}
-                  onMouseEnter={e => { e.currentTarget.style.background = "var(--surface-hover)"; e.currentTarget.style.color = "var(--primary-dark)"; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-secondary-alt)"; }}
+                  style={{ fontSize: 12 }}
                   onClick={() => { setShowNotifs(false); onNavigate && onNavigate("notifications"); }}
                 >
                   View all notifications
@@ -149,18 +281,16 @@ export function Topbar({ page, onSearch, onNavigate }) {
 
         {/* Profile */}
         <div style={{ position: "relative" }} ref={profileRef}>
-        <button className="icon-btn" onClick={() => setShowProfile(v => !v)}>
+          <button className="icon-btn" onClick={() => setShowProfile(v => !v)}>
             <FiUser />
           </button>
           {showProfile && (
-            <div
-              style={{
-                position: "absolute", top: "calc(100% + 8px)", right: 0,
-                background: "#fff", borderRadius: 12,
-                boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
-                minWidth: 220, zIndex: 100, overflow: "hidden",
-              }}
-            >
+            <div style={{
+              position: "absolute", top: "calc(100% + 8px)", right: 0,
+              background: "#fff", borderRadius: 12,
+              boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+              minWidth: 220, zIndex: 100, overflow: "hidden",
+            }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderBottom: "1px solid #f0dcea" }}>
                 <div className="avatar">{displayName.charAt(0).toUpperCase()}</div>
                 <div>
