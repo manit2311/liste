@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Check, X, Ban, Truck, Package, RefreshCw, Eye, Printer, Trash2, Plus } from 'lucide-react';
 import { purchaseOrderAPI } from '../../api/purchaseOrders';
 import { supplierAPI } from '../../api/suppliers';
 import { warehouseAPI } from '../../api/warehouses';
@@ -144,23 +145,23 @@ export function PurchaseOrders() {
         return (
           <>
             <button className="action-btn" title="Approve"
-              onClick={() => changeStatus(po, "approved")}>✅</button>
+              onClick={() => changeStatus(po, "approved")}><Check size={15} /></button>
             <button className="action-btn danger" title="Reject"
-              onClick={() => changeStatus(po, "rejected", `Reject ${poNumber(po)}?`)}>❌</button>
+              onClick={() => changeStatus(po, "rejected", `Reject ${poNumber(po)}?`)}><X size={15} /></button>
             <button className="action-btn danger" title="Cancel"
-              onClick={() => changeStatus(po, "cancelled", `Cancel ${poNumber(po)}?`)}>🚫</button>
+              onClick={() => changeStatus(po, "cancelled", `Cancel ${poNumber(po)}?`)}><Ban size={15} /></button>
           </>
         );
       case "approved":
         return (
           <>
             <button className="action-btn" title="Mark in transit"
-              onClick={() => changeStatus(po, "in_transit")}>🚚</button>
+              onClick={() => changeStatus(po, "in_transit")}><Truck size={15} /></button>
             <button className="action-btn" title="Receive goods"
               onClick={() => changeStatus(po, "received",
-                `Receive ${poNumber(po)}? Stock will be added.`)}>📦</button>
+                `Receive ${poNumber(po)}? Stock will be added.`)}><Package size={15} /></button>
             <button className="action-btn danger" title="Cancel"
-              onClick={() => changeStatus(po, "cancelled", `Cancel ${poNumber(po)}?`)}>🚫</button>
+              onClick={() => changeStatus(po, "cancelled", `Cancel ${poNumber(po)}?`)}><Ban size={15} /></button>
           </>
         );
       case "in_transit":
@@ -168,16 +169,16 @@ export function PurchaseOrders() {
           <>
             <button className="action-btn" title="Receive goods"
               onClick={() => changeStatus(po, "received",
-                `Receive ${poNumber(po)}? Stock will be added.`)}>📦</button>
+                `Receive ${poNumber(po)}? Stock will be added.`)}><Package size={15} /></button>
             <button className="action-btn danger" title="Cancel"
-              onClick={() => changeStatus(po, "cancelled", `Cancel ${poNumber(po)}?`)}>🚫</button>
+              onClick={() => changeStatus(po, "cancelled", `Cancel ${poNumber(po)}?`)}><Ban size={15} /></button>
           </>
         );
       case "rejected":
       case "cancelled":
         return (
           <button className="action-btn" title="Resubmit as pending"
-            onClick={() => changeStatus(po, "pending")}>🔄</button>
+            onClick={() => changeStatus(po, "pending")}><RefreshCw size={15} /></button>
         );
       default:
         return null;
@@ -347,9 +348,9 @@ export function PurchaseOrders() {
                     <div className="actions-cell">
                       {actionButtons(po)}
                       <button className="action-btn"
-                        onClick={() => setShowDetail(po)} title="View">👁</button>
+                        onClick={() => setShowDetail(po)} title="View"><Eye size={15} /></button>
                       <button className="action-btn"
-                        onClick={() => printPO(po)} title="Print / PDF">🖨️</button>
+                        onClick={() => printPO(po)} title="Print / PDF"><Printer size={15} /></button>
                     </div>
                   </td>
                 </tr>
@@ -422,11 +423,11 @@ export function PurchaseOrders() {
                   onChange={(e) => updateItemRow(i, "price", e.target.value)}
                   placeholder="Unit price" />
                 <button className="action-btn danger" onClick={() => removeItemRow(i)}
-                  title="Remove">🗑️</button>
+                  title="Remove"><Trash2 size={14} /></button>
               </div>
             </div>
           ))}
-          <button className="btn btn-secondary" onClick={addItemRow}>＋ Add product</button>
+          <button className="btn btn-secondary" onClick={addItemRow}><Plus size={14} style={{ marginRight: 4, verticalAlign: -2 }} />Add product</button>
 
           <div className="form-group" style={{ marginTop: 14 }}>
             <label className="form-label">Notes</label>
@@ -471,7 +472,7 @@ export function PurchaseOrders() {
           )}
           <div style={{ textAlign: "right", marginTop: 12 }}>
             <button className="btn btn-secondary" onClick={() => printPO(showDetail)}>
-              🖨️ Print / PDF
+              <Printer size={14} style={{ marginRight: 6, verticalAlign: -2 }} />Print / PDF
             </button>
           </div>
         </Modal>

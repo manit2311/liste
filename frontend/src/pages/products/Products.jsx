@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Search, ArrowUp, RefreshCw, Pencil, Trash2, RotateCcw, AlertTriangle } from 'lucide-react';
 import { categoryAPI } from "../../api/categories";
 import { supplierAPI } from "../../api/suppliers";
 import { warehouseAPI } from "../../api/warehouses";
@@ -129,7 +130,7 @@ export function Products() {
     const free = assign.product.unassigned ?? 0;
     if (!assign.warehouse) { alert("Please choose a warehouse."); return; }
     if (!qty || qty <= 0) { alert("Please enter a quantity greater than 0."); return; }
-    if (qty > free) { alert(`⚠️ Only ${free} unassigned units — you can't assign ${qty}.`); return; }
+    if (qty > free) { alert(`Only ${free} unassigned units — you can't assign ${qty}.`); return; }
     try {
       await productAPI.assign(assign.product.id, { warehouse: assign.warehouse, quantity: qty });
       setAssign(null);
@@ -198,7 +199,7 @@ export function Products() {
       <div className="toolbar">
         <div className="toolbar-left">
           <div className="inline-search" style={{ maxWidth: 300 }}>
-            <span className="search-icon" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#c4a0bc" }}>🔍</span>
+            <span className="search-icon" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#c4a0bc" }}><Search size={15} /></span>
             <input
               className="search-input"
               placeholder="Search products…"
@@ -219,7 +220,7 @@ export function Products() {
             ))}
           </div>
         </div>
-        <button className="btn btn-secondary" onClick={exportCSV}>↑ Export CSV</button>
+        <button className="btn btn-secondary" onClick={exportCSV}><ArrowUp size={14} style={{ marginRight: 4, verticalAlign: -2 }} />Export CSV</button>
       </div>
 
       <div className="card">
@@ -288,7 +289,7 @@ export function Products() {
                       {filter !== "archived" && (
                         <button className="action-btn" title="Assign stock to a warehouse"
                           onClick={() => setAssign({ product: p, warehouse: "", quantity: "" })}>
-                          🔄
+                          <RefreshCw size={14} />
                         </button>
                       )}
                       {filter !== "archived" ? (
@@ -306,16 +307,16 @@ export function Products() {
                                 supplier: p.supplier ?? "",
                               });
                               setShowEdit(p);
-                            }}>✏️</button>
+                            }}><Pencil size={14} /></button>
                           <button className="action-btn danger" title="Archive"
-                            onClick={() => setShowDelete(p)}>🗑️</button>
+                            onClick={() => setShowDelete(p)}><Trash2 size={14} /></button>
                         </>
                       ) : (
                         <button className="action-btn" title="Restore"
                           onClick={async () => {
                             await productAPI.restore(p.id);
                             loadProducts(filter, search, page);
-                          }}>♻️</button>
+                          }}><RotateCcw size={14} /></button>
                       )}
                     </div>
                   </td>
@@ -498,7 +499,7 @@ export function Products() {
             />
             {Number(assign.quantity) > (assign.product.unassigned ?? 0) && (
               <div style={{ color: "#d23369", fontSize: 12.5, marginTop: 6 }}>
-                ⚠️ Only {assign.product.unassigned ?? 0} unassigned — reduce the amount.
+                <AlertTriangle size={13} style={{ marginRight: 4, verticalAlign: -2 }} />Only {assign.product.unassigned ?? 0} unassigned — reduce the amount.
               </div>
             )}
           </div>
