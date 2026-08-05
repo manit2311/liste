@@ -7,7 +7,7 @@ class CompanySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Company
-        fields = ['id', 'name', 'slug', 'is_active', 'created_at', 'user_count']
+        fields = ['id', 'name', 'slug', 'is_active', 'is_private', 'created_at', 'user_count']
 
     def get_user_count(self, obj):
         return obj.users.count()
