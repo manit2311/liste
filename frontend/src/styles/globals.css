@@ -294,9 +294,9 @@ body, #root {
   display: flex;
   align-items: center;
   gap: var(--space-lg);
-  position: sticky;
+  position: relative;
   top: 0;
-  z-index: 10;
+  z-index: 100;
 }
 
 .page-title {
@@ -1181,7 +1181,7 @@ td {
   border: 1px solid var(--border-main);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-panel);
-  z-index: 50;
+  z-index: 200;
   overflow: hidden;
 }
 

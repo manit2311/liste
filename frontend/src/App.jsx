@@ -40,7 +40,6 @@ const PAGE_MAP = {
   'platform-audit': PlatformAudit,
 };
 
-// Platform pages should never be blurred
 const PLATFORM_PAGES = ['platform-companies', 'platform-users', 'platform-audit'];
 
 export default function App() {
@@ -77,7 +76,6 @@ export default function App() {
   const PageComponent = PAGE_MAP[page] || Dashboard;
   const superAdmin = isSuperAdmin(user);
 
-  // Check if selected company is private — blur for super admin on data pages
   const selectedCompany = companies.find(c => c.id === selectedCompanyId);
   const isPrivatePage = superAdmin &&
     selectedCompany?.is_private &&
@@ -98,9 +96,8 @@ export default function App() {
           </button>
         </div>
       ) : isPrivatePage ? (
-        /* Blur overlay when company is private */
-        <div style={{ position: "relative" }}>
-          {/* Blurred background content */}
+        <div style={{ position: "relative", minHeight: "80vh" }}>
+          {/* Blurred page content */}
           <div style={{
             filter: "blur(8px)",
             pointerEvents: "none",
@@ -110,14 +107,17 @@ export default function App() {
             <PageComponent setPage={setPage} />
           </div>
 
-          {/* Overlay message */}
+          {/* Overlay — zIndex 5 so topbar (zIndex 100) stays above it */}
           <div style={{
-            position: "absolute", inset: 0,
+            position: "absolute",
+            top: 0, left: 0, right: 0, bottom: 0,
             display: "flex", flexDirection: "column",
-            alignItems: "center", justifyContent: "center",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            paddingTop: "80px",
             background: "rgba(248,239,246,0.6)",
             backdropFilter: "blur(2px)",
-            zIndex: 10,
+            zIndex: 5,
           }}>
             <div style={{
               background: "#fff", borderRadius: 16, padding: "40px 48px",
@@ -130,7 +130,7 @@ export default function App() {
               <div style={{
                 width: 64, height: 64, borderRadius: "50%",
                 background: "#fdf0f7", border: "2px solid #f0dcea",
-                display: "flex", alignItems: "center", justifyContent:"",
+                display: "flex", alignItems: "center", justifyContent: "center",
                 marginBottom: 16,
               }}>
                 <FiEyeOff size={28} color="#c9407f" />
