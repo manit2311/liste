@@ -3,6 +3,7 @@ import './styles/globals.css';
 import { useAuthStore } from './store/authStore';
 import { useCompanyStore } from './store/companyStore';
 import { canAccess, isSuperAdmin } from './constants/roles';
+import { FiEyeOff } from 'react-icons/fi';
 
 import { Login } from './pages/auth/Login';
 import { Dashboard } from './pages/dashboard/Dashboard';
@@ -20,7 +21,6 @@ import { PlatformCompanies } from './pages/platform/PlatformCompanies';
 import { PlatformUsers } from './pages/platform/PlatformUsers';
 import { PlatformAudit } from './pages/platform/PlatformAudit';
 import { Layout } from './components/layout/Layout';
-import { FiEyeOff } from 'react-icons/fi';
 
 const PAGE_MAP = {
   dashboard: Dashboard,
@@ -106,7 +106,7 @@ export default function App() {
             <PageComponent setPage={setPage} />
           </div>
 
-          {/* Overlay — zIndex 5 so topbar (zIndex 100) stays above it */}
+          {/* Overlay */}
           <div style={{
             position: "absolute",
             top: 0, left: 0, right: 0, bottom: 0,
