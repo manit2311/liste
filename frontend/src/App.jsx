@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Lock } from 'lucide-react';
 import './styles/globals.css';
 import { useAuthStore } from './store/authStore';
 import { useCompanyStore } from './store/companyStore';
@@ -85,7 +84,7 @@ export default function App() {
     <Layout key={companyKey} page={page} onPageChange={setPage}>
       {!allowed ? (
         <div style={{ textAlign: "center", padding: "80px 20px" }}>
-          <Lock size={40} style={{ color: "#c4a0bc" }} />
+          <FiEyeOff size={40} color="#c4a0bc" />
           <h2 style={{ marginTop: 12 }}>Access restricted</h2>
           <p style={{ color: "#a87c9e", marginTop: 6 }}>
             You don't have permission to view this page.
