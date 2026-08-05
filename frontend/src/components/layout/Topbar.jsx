@@ -75,10 +75,17 @@ export function Topbar({ page, onSearch, onNavigate }) {
       const data = response.data;
       const list = Array.isArray(data) ? data : data.results ?? [];
       setCompanies(list);
-      if (superAdmin && !selectedCompanyId && list.length > 0) {
-        setSelectedCompany(list[0].id);
+
+      if (superAdmin) {
+        // Default to company with lowest ID (oldest = D-Outlets first)
+        if (!selectedCompanyId && list.length > 0) {
+          const first = list.reduce((min, c) => c.id < min.id ? c : min, list[0]);
+          setSelectedCompany(first.id);
+        }
       }
+
       if (boss && !superAdmin) {
+        // Boss only sees their own company from API
         const mine = list[0] || null;
         setMyCompany(mine);
       }
@@ -119,11 +126,15 @@ export function Topbar({ page, onSearch, onNavigate }) {
   const togglePrivacy = async () => {
     if (!myCompany || savingPrivacy) return;
     setSavingPrivacy(true);
+    const newPrivacy = !myCompany.is_private;
     try {
-      await companyAPI.update(myCompany.id, { is_private: !myCompany.is_private });
-      setMyCompany({ ...myCompany, is_private: !myCompany.is_private });
-      loadCompanies();
+      await companyAPI.update(myCompany.id, { is_private: newPrivacy });
+      // Update local state immediately
+      setMyCompany({ ...myCompany, is_private: newPrivacy });
+      // Refresh companies list
+      await loadCompanies();
     } catch (error) {
+      console.log(error);
       alert("Failed to update privacy setting.");
     } finally {
       setSavingPrivacy(false);
@@ -131,6 +142,10 @@ export function Topbar({ page, onSearch, onNavigate }) {
   };
 
   const handleSwitchCompany = (id) => {
+    if (id === selectedCompanyId) {
+      setShowSwitcher(false);
+      return;
+    }
     setShowSwitcher(false);
     setSwitching(true);
     setSelectedCompany(id);
@@ -188,27 +203,26 @@ export function Topbar({ page, onSearch, onNavigate }) {
 
       <div className="topbar-actions">
 
-        {/* ── BOSS: Simple privacy toggle button next to bell ── */}
+        {/* ── BOSS: Privacy toggle button ── */}
         {boss && !superAdmin && myCompany && (
           <button
             onClick={togglePrivacy}
             disabled={savingPrivacy}
             title={myCompany.is_private
-              ? "Click to share your data with Super Admin"
-              : "Click to hide your data from Super Admin"
+              ? "Your data is hidden from Super Admin — click to share"
+              : "Your data is visible to Super Admin — click to hide"
             }
             style={{
               display: "inline-flex", alignItems: "center", gap: 6,
               padding: "6px 14px", borderRadius: 20,
-              border: `1.5px solid ${myCompany.is_private ? '#fde8e8' : '#f0dcea'}`,
-              background: myCompany.is_private ? '#fff8f8' : '#fdf8fc',
+              border: `1.5px solid ${myCompany.is_private ? '#fca5a5' : '#f0dcea'}`,
+              background: myCompany.is_private ? '#fff1f1' : '#fdf8fc',
               color: myCompany.is_private ? '#c0392b' : '#a82d68',
               fontSize: 12.5, fontWeight: 600,
               cursor: savingPrivacy ? "not-allowed" : "pointer",
+              opacity: savingPrivacy ? 0.7 : 1,
               transition: "all 0.2s",
             }}
-            onMouseEnter={e => { if (!savingPrivacy) e.currentTarget.style.opacity = '0.75'; }}
-            onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
           >
             {savingPrivacy
               ? "Saving..."
@@ -254,7 +268,7 @@ export function Topbar({ page, onSearch, onNavigate }) {
                     VIEW COMPANY DATA
                   </div>
                 </div>
-                {companies.map(c => (
+                {[...companies].sort((a, b) => a.id - b.id).map(c => (
                   <div
                     key={c.id}
                     onClick={() => handleSwitchCompany(c.id)}
@@ -264,6 +278,7 @@ export function Topbar({ page, onSearch, onNavigate }) {
                       borderLeft: selectedCompanyId === c.id ? '3px solid #c9407f' : '3px solid transparent',
                       display: "flex", alignItems: "center", justifyContent: "space-between",
                       transition: "background 0.12s",
+                      opacity: c.is_private ? 0.6 : 1,
                     }}
                     onMouseEnter={e => {
                       if (selectedCompanyId !== c.id) e.currentTarget.style.background = '#fdf8fc';
@@ -276,13 +291,17 @@ export function Topbar({ page, onSearch, onNavigate }) {
                       <div style={{
                         fontSize: 13,
                         fontWeight: selectedCompanyId === c.id ? 600 : 400,
-                        color: selectedCompanyId === c.id ? '#c9407f' : '#2c1a26'
+                        color: selectedCompanyId === c.id ? '#c9407f' : '#2c1a26',
+                        display: "flex", alignItems: "center", gap: 6,
                       }}>
                         {c.name}
+                        {c.is_private && (
+                          <span style={{ fontSize: 10, color: "#c0392b" }}>🔒</span>
+                        )}
                       </div>
                       <div style={{ fontSize: 11, color: "#a87c9e", marginTop: 1 }}>
                         {c.user_count ?? 0} users · {c.is_active ? "Active" : "Inactive"}
-                        {c.is_private && " · 🔒 Private"}
+                        {c.is_private && " · Hidden"}
                       </div>
                     </div>
                     {selectedCompanyId === c.id && (

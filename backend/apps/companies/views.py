@@ -11,18 +11,14 @@ class CompanyViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        # Super admin sees all companies
         if hasattr(user, 'role') and user.role == 'super_admin':
-            return Company.objects.all().order_by('-created_at')
-        # Boss/Staff sees only their own company
+            # Oldest first so D-Outlets (id=1) always appears first
+            return Company.objects.all().order_by('created_at')
         if hasattr(user, 'company') and user.company:
             return Company.objects.filter(id=user.company.id)
         return Company.objects.none()
 
     def get_permissions(self):
-        # Anyone authenticated can read (GET)
-        # Only Super Admin can create or delete
-        # Boss can update their own company (for privacy toggle)
         if self.action in ['create', 'destroy']:
             return [IsSuperAdmin()]
         return [IsAuthenticated()]
