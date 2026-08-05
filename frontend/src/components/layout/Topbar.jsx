@@ -67,22 +67,24 @@ export function Topbar({ page, onSearch, onNavigate }) {
   };
 
   const loadCompanies = async () => {
-    try {
-      const response = await companyAPI.getAll();
-      const data = response.data;
-      const list = Array.isArray(data) ? data : data.results ?? [];
-      setCompanies(list);
-      if (superAdmin && !selectedCompanyId && list.length > 0) {
-        setSelectedCompany(list[0].id);
-      }
-      if (boss && !superAdmin) {
-        const mine = list.find(c => c.name === user?.company_name) || list[0] || null;
-        setMyCompany(mine);
-      }
-    } catch (error) {
-      console.log(error);
+  try {
+    const response = await companyAPI.getAll();
+    const data = response.data;
+    const list = Array.isArray(data) ? data : data.results ?? [];
+    setCompanies(list);
+    if (superAdmin && !selectedCompanyId && list.length > 0) {
+      setSelectedCompany(list[0].id);
     }
-  };
+    if (boss && !superAdmin) {
+      // Boss only sees their own company from the API
+      // So the first (and only) result is their company
+      const mine = list[0] || null;
+      setMyCompany(mine);
+    }
+  } catch (error) {
+    console.log(error);
+  }
+};
 
   useEffect(() => {
     loadUnread();

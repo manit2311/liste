@@ -1,5 +1,16 @@
 import axios from 'axios';
 
+// Decode JWT token to get user info
+function decodeToken(token) {
+  try {
+    const base64 = token.split('.')[1];
+    const decoded = JSON.parse(atob(base64));
+    return decoded;
+  } catch {
+    return null;
+  }
+}
+
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api',
   headers: { 'Content-Type': 'application/json' },
@@ -10,18 +21,23 @@ axiosInstance.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
   try {
     const raw = localStorage.getItem('company-store');
-    if (raw) {
+    if (raw && token) {
       const parsed = JSON.parse(raw);
       const selectedCompanyId = parsed?.state?.selectedCompanyId;
-      if (selectedCompanyId) {
+      const decoded = decodeToken(token);
+      const role = decoded?.role;
+      // Only add company_id param for super admin
+      if (selectedCompanyId && role === 'super_admin') {
         config.params = { ...config.params, company_id: selectedCompanyId };
       }
     }
   } catch (e) {
     // ignore
   }
+
   return config;
 });
 
