@@ -130,7 +130,7 @@ export default function App() {
               <div style={{
                 width: 64, height: 64, borderRadius: "50%",
                 background: "#fdf0f7", border: "2px solid #f0dcea",
-                display: "flex", alignItems: "center", justifyContent: "center",
+                display: "flex", alignItems: "center", justifyContent:"",
                 marginBottom: 16,
               }}>
                 <FiEyeOff size={28} color="#c9407f" />
