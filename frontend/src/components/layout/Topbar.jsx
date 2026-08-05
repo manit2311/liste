@@ -6,7 +6,7 @@ import { useCompanyStore } from '../../store/companyStore';
 import { isBoss, isSuperAdmin } from '../../constants/roles';
 import {
   FiBell, FiUser, FiAlertTriangle, FiEdit2, FiPackage,
-  FiArrowUp, FiArrowDown, FiEye, FiEyeOff, FiChevronDown, FiGlobe
+  FiArrowUp, FiArrowDown, FiEye, FiEyeOff, FiChevronDown, FiGlobe, FiLock
 } from 'react-icons/fi';
 
 const TYPE_ICONS = {
@@ -75,17 +75,11 @@ export function Topbar({ page, onSearch, onNavigate }) {
       const data = response.data;
       const list = Array.isArray(data) ? data : data.results ?? [];
       setCompanies(list);
-
-      if (superAdmin) {
-        // Default to company with lowest ID (oldest = D-Outlets first)
-        if (!selectedCompanyId && list.length > 0) {
-          const first = list.reduce((min, c) => c.id < min.id ? c : min, list[0]);
-          setSelectedCompany(first.id);
-        }
+      if (superAdmin && !selectedCompanyId && list.length > 0) {
+        const first = list.reduce((min, c) => c.id < min.id ? c : min, list[0]);
+        setSelectedCompany(first.id);
       }
-
       if (boss && !superAdmin) {
-        // Boss only sees their own company from API
         const mine = list[0] || null;
         setMyCompany(mine);
       }
@@ -129,12 +123,9 @@ export function Topbar({ page, onSearch, onNavigate }) {
     const newPrivacy = !myCompany.is_private;
     try {
       await companyAPI.update(myCompany.id, { is_private: newPrivacy });
-      // Update local state immediately
       setMyCompany({ ...myCompany, is_private: newPrivacy });
-      // Refresh companies list
       await loadCompanies();
     } catch (error) {
-      console.log(error);
       alert("Failed to update privacy setting.");
     } finally {
       setSavingPrivacy(false);
@@ -203,7 +194,7 @@ export function Topbar({ page, onSearch, onNavigate }) {
 
       <div className="topbar-actions">
 
-        {/* ── BOSS: Privacy toggle button ── */}
+        {/* Boss — Privacy toggle button */}
         {boss && !superAdmin && myCompany && (
           <button
             onClick={togglePrivacy}
@@ -233,7 +224,7 @@ export function Topbar({ page, onSearch, onNavigate }) {
           </button>
         )}
 
-        {/* ── SUPER ADMIN: Company switcher ── */}
+        {/* Super Admin — Company switcher */}
         {superAdmin && companies.length > 0 && (
           <div style={{ position: "relative" }} ref={switcherRef}>
             <button
@@ -278,7 +269,7 @@ export function Topbar({ page, onSearch, onNavigate }) {
                       borderLeft: selectedCompanyId === c.id ? '3px solid #c9407f' : '3px solid transparent',
                       display: "flex", alignItems: "center", justifyContent: "space-between",
                       transition: "background 0.12s",
-                      opacity: c.is_private ? 0.6 : 1,
+                      opacity: c.is_private ? 0.7 : 1,
                     }}
                     onMouseEnter={e => {
                       if (selectedCompanyId !== c.id) e.currentTarget.style.background = '#fdf8fc';
@@ -292,16 +283,18 @@ export function Topbar({ page, onSearch, onNavigate }) {
                         fontSize: 13,
                         fontWeight: selectedCompanyId === c.id ? 600 : 400,
                         color: selectedCompanyId === c.id ? '#c9407f' : '#2c1a26',
-                        display: "flex", alignItems: "center", gap: 6,
+                        display: "flex", alignItems: "center", gap: 5,
                       }}>
                         {c.name}
                         {c.is_private && (
-                          <span style={{ fontSize: 10, color: "#c0392b" }}>🔒</span>
+                          <FiLock size={11} color="#c0392b" />
                         )}
                       </div>
                       <div style={{ fontSize: 11, color: "#a87c9e", marginTop: 1 }}>
                         {c.user_count ?? 0} users · {c.is_active ? "Active" : "Inactive"}
-                        {c.is_private && " · Hidden"}
+                        {c.is_private && (
+                          <span style={{ color: "#c0392b" }}> · Hidden</span>
+                        )}
                       </div>
                     </div>
                     {selectedCompanyId === c.id && (

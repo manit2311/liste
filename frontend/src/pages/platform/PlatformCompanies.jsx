@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { companyAPI } from '../../api/companies';
 import { Modal } from '../../components/common/Modal';
-import { FiPlus, FiEye, FiEyeOff } from 'react-icons/fi';
+import {
+  FiBell, FiUser, FiAlertTriangle, FiEdit2, FiPackage,
+  FiArrowUp, FiArrowDown, FiEye, FiEyeOff, FiChevronDown, FiGlobe, FiLock
+} from 'react-icons/fi';
 
 const emptyForm = { name: "", slug: "", is_active: true };
 
@@ -166,7 +169,7 @@ export function PlatformCompanies() {
       {companies.filter(c => c.is_private).length > 0 && (
         <div style={{ marginTop: 20 }}>
           <h3 style={{ fontSize: 14, color: "#a87c9e", marginBottom: 12 }}>
-            🔒 Companies that have hidden their data from you
+          {c.is_private && <span style={{ display: "inline-flex", alignItems: "center", gap: 3, marginLeft: 4 }}><FiLock size={10} /> Hidden</span>}
           </h3>
           <div style={{
             display: "grid",
