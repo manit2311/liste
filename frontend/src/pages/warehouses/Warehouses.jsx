@@ -161,7 +161,7 @@ export function Warehouses() {
       return;
     }
     if (qty > onHand) {
-      alert(`⚠️ Only ${onHand} in this warehouse — you can't transfer ${qty}.`);
+      alert(`Only ${onHand} in this warehouse — you can't transfer ${qty}.`);
       return;
     }
     try {

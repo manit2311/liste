@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Save, Search, Plus, Trash2 } from 'lucide-react';
 import { productAPI } from '../../api/products';
 import { categoryAPI } from '../../api/categories';
 import { supplierAPI } from '../../api/suppliers';
@@ -165,7 +166,7 @@ export function StockInModal({ onClose, onSaved }) {
         <>
           <button className="btn btn-secondary" onClick={onClose} disabled={stockInSubmitting}>Cancel</button>
           <button className="btn btn-primary" onClick={saveStockIn} disabled={!canSaveStockIn}>
-            {stockInSubmitting ? "Saving…" : "💾 Save"}
+            {stockInSubmitting ? "Saving…" : (<><Save size={15} style={{ marginRight: 6, verticalAlign: -2 }} />Save</>)}
           </button>
         </>
       }
@@ -176,7 +177,7 @@ export function StockInModal({ onClose, onSaved }) {
 
       <div style={{ marginBottom: 16 }}>
         <div className="search-wrap" style={{ maxWidth: "100%" }}>
-          <span className="search-icon">🔍</span>
+          <span className="search-icon"><Search size={15} /></span>
           <input
             className="search-input"
             placeholder="Search products…"
@@ -191,7 +192,7 @@ export function StockInModal({ onClose, onSaved }) {
           style={{ marginTop: 8 }}
           onClick={openQuickAddProduct}
         >
-          ＋ Add new product
+          <Plus size={14} style={{ marginRight: 4, verticalAlign: -2 }} />Add new product
         </button>
 
         {showQuickAddProduct && (
@@ -313,7 +314,7 @@ export function StockInModal({ onClose, onSaved }) {
                     />
                   </td>
                   <td>
-                    <button className="action-btn danger" onClick={() => removeStockInItem(item.id)}>🗑️</button>
+                    <button className="action-btn danger" onClick={() => removeStockInItem(item.id)}><Trash2 size={14} /></button>
                   </td>
                 </tr>
               ))}

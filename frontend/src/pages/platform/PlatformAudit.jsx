@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { HelpCircle, Smartphone, Monitor, Search } from 'lucide-react';
 import { auditAPI } from '../../api/audit';
 
 function formatTime(iso) {
@@ -6,10 +7,10 @@ function formatTime(iso) {
   return d.toLocaleDateString() + " " + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-function deviceIcon(device) {
-  if (!device) return "❔";
-  if (device.includes("iPhone") || device.includes("Android")) return "📱";
-  return "💻";
+function DeviceIcon({ device }) {
+  if (!device) return <HelpCircle size={14} />;
+  if (device.includes("iPhone") || device.includes("Android")) return <Smartphone size={14} />;
+  return <Monitor size={14} />;
 }
 
 export function PlatformAudit() {
@@ -51,7 +52,7 @@ export function PlatformAudit() {
       <div className="card">
         <div style={{ padding: "14px 16px", borderBottom: "1px solid #f8eef5" }}>
           <div className="search-wrap" style={{ maxWidth: 300 }}>
-            <span className="search-icon">🔍</span>
+            <span className="search-icon"><Search size={15} /></span>
             <input
               className="search-input"
               placeholder="Search actions or users…"
@@ -92,7 +93,7 @@ export function PlatformAudit() {
                     </div>
                   </td>
                   <td style={{ fontSize: 13, whiteSpace: "nowrap" }}>
-                    {deviceIcon(l.device)} {l.device || "-"}
+                    <DeviceIcon device={l.device} /> {l.device || "-"}
                   </td>
                   <td style={{ fontSize: 13.5 }}>{l.action}</td>
                 </tr>

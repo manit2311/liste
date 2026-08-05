@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Circle } from 'lucide-react';
 import { companyAPI } from '../../api/companies';
 import { Modal } from '../../components/common/Modal';
 
@@ -106,7 +107,7 @@ export function PlatformCompanies() {
                         title={c.is_active ? "Deactivate" : "Activate"}
                         onClick={() => toggleActive(c)}
                       >
-                        {c.is_active ? "🔴" : "🟢"}
+                        {c.is_active ? <Circle size={13} fill="#e84e7a" color="#e84e7a" /> : <Circle size={13} fill="#2c8a4d" color="#2c8a4d" />}
                       </button>
                     </div>
                   </td>

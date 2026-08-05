@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Search } from 'lucide-react';
 import { userAPI } from '../../api/users';
 import { StatusBadge } from '../../components/common/StatusBadge';
 
@@ -46,7 +47,7 @@ export function PlatformUsers() {
       <div className="card">
         <div style={{ padding: "14px 16px", borderBottom: "1px solid #f8eef5" }}>
           <div className="search-wrap" style={{ maxWidth: 260 }}>
-            <span className="search-icon">🔍</span>
+            <span className="search-icon"><Search size={15} /></span>
             <input
               className="search-input"
               placeholder="Search users or company…"

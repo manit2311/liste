@@ -4,6 +4,7 @@ import { orderAPI } from '../../api/orders';
 import { inventoryAPI } from '../../api/inventory';
 import { StockInModal } from '../../components/inventory/StockInModal';
 import { useAuthStore } from '../../store/authStore';// Repeatedly pages through a paginated (or plain-array) endpoint and returns the full list.
+import { Plus } from 'lucide-react';
 async function fetchAll(fetchPage) {
   let page = 1;
   let all = [];
@@ -124,7 +125,7 @@ export function Dashboard({ setPage }) {
           <p>Here's what's happening in your store today.</p>
         </div>
         <button className="btn btn-primary" onClick={() => setShowStockIn(true)}>
-          ＋ Quick stock in
+          <Plus size={15} style={{ marginRight: 6, verticalAlign: -2 }} />Quick stock in
         </button>
       </div>
 

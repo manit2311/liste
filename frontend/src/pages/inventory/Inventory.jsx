@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Search } from 'lucide-react';
 import { inventoryAPI } from '../../api/inventory';
 import { productAPI } from '../../api/products';
 import { categoryAPI } from '../../api/categories';
@@ -493,7 +494,7 @@ export function Inventory({ params, onConsumeParams }) {
         <div className="card">
           <div style={{ padding: "14px 16px", borderBottom: "1px solid #f8eef5", display: "flex", gap: 12, alignItems: "center" }}>
             <div className="search-wrap" style={{ maxWidth: 260 }}>
-              <span className="search-icon">🔍</span>
+              <span className="search-icon"><Search size={15} /></span>
               <input
                 className="search-input"
                 placeholder="Search products…"

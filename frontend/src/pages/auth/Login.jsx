@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Check, X } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { authAPI } from '../../api/auth';
 
@@ -47,7 +48,7 @@ function PasswordStrengthHint({ password }) {
     <div style={{ marginTop: 8 }}>
       {rules.map((r, i) => (
         <div key={i} style={{ fontSize: 12, color: r.ok ? "#2c8a4d" : "#c0392b", marginBottom: 2 }}>
-          {r.ok ? "✅" : "❌"} {r.text}
+          {r.ok ? <Check size={13} /> : <X size={13} />} {r.text}
         </div>
       ))}
     </div>
@@ -145,7 +146,7 @@ export function Login() {
         phone: verifiedPhone,
         password: resetPassword,
       });
-      setResetSuccess('✅ Password updated! Sign in with your new password.');
+      setResetSuccess('Password updated! Sign in with your new password.');
       setFailCount(0);
       setError('');
       setTimeout(() => {
@@ -325,12 +326,12 @@ export function Login() {
                     placeholder="Repeat the password" style={inputStyle} required />
                   {resetConfirm && resetPassword !== resetConfirm && (
                     <div style={{ fontSize: 12, color: '#c0392b', marginTop: 6 }}>
-                      ❌ Passwords don't match
+                      <X size={13} /> Passwords don't match
                     </div>
                   )}
                   {resetConfirm && resetPassword === resetConfirm && resetConfirm.length > 0 && (
                     <div style={{ fontSize: 12, color: '#2c8a4d', marginTop: 6 }}>
-                      ✅ Passwords match
+                      <Check size={13} /> Passwords match
                     </div>
                   )}
                 </div>
