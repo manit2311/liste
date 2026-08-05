@@ -65,10 +65,23 @@ class OrderSerializer(serializers.ModelSerializer):
         return max(subtotal - discount, 0)
 
     def _generate_invoice_number(self):
-        # Locks the last row so two simultaneous creates can't compute the same next number.
-        last = Order.objects.select_for_update().order_by("-id").first()
-        next_id = (last.id + 1) if last else 1
-        return f"INV-{next_id:04d}"
+        """Generate invoice number scoped to the company — each company starts from INV-0001."""
+        company = None
+        user = self._current_user()
+        if user:
+            company = getattr(user, 'company', None)
+
+        if company:
+            last = Order.objects.select_for_update().filter(
+                company=company
+            ).order_by("-id").first()
+            count = Order.objects.filter(company=company).count()
+            next_num = count + 1
+        else:
+            count = Order.objects.count()
+            next_num = count + 1
+
+        return f"INV-{next_num:04d}"
 
     def _current_user(self):
         request = self.context.get("request")

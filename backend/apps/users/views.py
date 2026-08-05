@@ -32,6 +32,12 @@ class LoginView(APIView):
         password = request.data.get("password")
         user = authenticate(username=username, password=password)
         if user:
+            # Feature 1 — block login if company is inactive
+            if user.company and not user.company.is_active:
+                return Response(
+                    {"error": "Your company account has been deactivated. Please contact the platform administrator."},
+                    status=403
+                )
             log_action(user, "Logged in", request)
             refresh = RefreshToken.for_user(user)
             return Response({
