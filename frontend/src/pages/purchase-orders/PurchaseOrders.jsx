@@ -59,6 +59,7 @@ export function PurchaseOrders() {
   };
 
   const loadSuppliers = async () => {
+    if (!boss) return; // staff cannot access suppliers
     try {
       const response = await supplierAPI.getAll();
       setSuppliers(unwrapList(response.data).list);
