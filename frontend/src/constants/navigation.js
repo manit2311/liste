@@ -22,5 +22,4 @@ export const PLATFORM_NAV = [
   { id: "platform-companies", label: "Companies",      icon: FiGlobe },
   { id: "platform-users",     label: "Platform Users", icon: FiUsers },
   { id: "platform-audit",     label: "Platform Audit", icon: FiClipboard },
-  { id: "notifications",      label: "Notifications",  icon: FiBell },
 ];

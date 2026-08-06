@@ -4,6 +4,7 @@ import { useAuthStore } from './store/authStore';
 import { useCompanyStore } from './store/companyStore';
 import { canAccess, isSuperAdmin } from './constants/roles';
 import { FiEyeOff } from 'react-icons/fi';
+import { companyAPI } from './api/companies';
 
 import { Login } from './pages/auth/Login';
 import { Dashboard } from './pages/dashboard/Dashboard';
@@ -39,12 +40,11 @@ const PAGE_MAP = {
   'platform-audit': PlatformAudit,
 };
 
-// These pages are never blurred even when company is private
+// These pages never blur even when company is private
 const PLATFORM_PAGES = [
   'platform-companies',
   'platform-users',
   'platform-audit',
-  'notifications',
   'users',
 ];
 
@@ -53,14 +53,33 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [companyKey, setCompanyKey] = useState(0);
   const { isAuthenticated, checkAuth, user } = useAuthStore();
-  const { companies, selectedCompanyId } = useCompanyStore();
+  const { companies, selectedCompanyId, setCompanies } = useCompanyStore();
 
   useEffect(() => {
     checkAuth().then(() => setLoading(false));
   }, []);
 
+  // Refresh companies from API on load to get latest is_private values
   useEffect(() => {
-    const handler = () => setCompanyKey(k => k + 1);
+    if (isAuthenticated && user) {
+      companyAPI.getAll().then(res => {
+        const data = res.data;
+        const list = Array.isArray(data) ? data : data.results ?? [];
+        setCompanies(list);
+      }).catch(() => {});
+    }
+  }, [isAuthenticated, user]);
+
+  useEffect(() => {
+    const handler = () => {
+      // Also refresh companies when company changes
+      companyAPI.getAll().then(res => {
+        const data = res.data;
+        const list = Array.isArray(data) ? data : data.results ?? [];
+        setCompanies(list);
+      }).catch(() => {});
+      setCompanyKey(k => k + 1);
+    };
     window.addEventListener('company-changed', handler);
     return () => window.removeEventListener('company-changed', handler);
   }, []);
@@ -82,9 +101,10 @@ export default function App() {
   const PageComponent = PAGE_MAP[page] || Dashboard;
   const superAdmin = isSuperAdmin(user);
 
+  // Get fresh is_private from companies store
   const selectedCompany = companies.find(c => c.id === selectedCompanyId);
   const isPrivatePage = superAdmin &&
-    selectedCompany?.is_private &&
+    selectedCompany?.is_private === true &&
     !PLATFORM_PAGES.includes(page);
 
   return (
@@ -104,31 +124,25 @@ export default function App() {
       ) : isPrivatePage ? (
         <div style={{ position: "relative", minHeight: "80vh" }}>
           <div style={{
-            filter: "blur(8px)",
-            pointerEvents: "none",
-            userSelect: "none",
-            opacity: 0.4,
+            filter: "blur(8px)", pointerEvents: "none",
+            userSelect: "none", opacity: 0.4,
           }}>
             <PageComponent setPage={setPage} />
           </div>
           <div style={{
-            position: "absolute",
-            top: 0, left: 0, right: 0, bottom: 0,
+            position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
             display: "flex", flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "flex-start",
+            alignItems: "center", justifyContent: "flex-start",
             paddingTop: "80px",
             background: "rgba(248,239,246,0.6)",
-            backdropFilter: "blur(2px)",
-            zIndex: 5,
+            backdropFilter: "blur(2px)", zIndex: 5,
           }}>
             <div style={{
               background: "#fff", borderRadius: 16, padding: "40px 48px",
               boxShadow: "0 8px 40px rgba(180,100,150,0.18)",
               border: "1.5px solid #f0dcea",
               display: "flex", flexDirection: "column",
-              alignItems: "center", textAlign: "center",
-              maxWidth: 400,
+              alignItems: "center", textAlign: "center", maxWidth: 400,
             }}>
               <div style={{
                 width: 64, height: 64, borderRadius: "50%",
