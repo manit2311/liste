@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
-import { userAPI } from '../../api/users';
+import axiosInstance from '../../api/axios';
 import { StatusBadge } from '../../components/common/StatusBadge';
+import { FiSearch } from 'react-icons/fi';
 
 const ROLE_LABELS = {
   super_admin: "Super Admin",
@@ -16,7 +16,10 @@ export function PlatformUsers() {
 
   const load = async () => {
     try {
-      const response = await userAPI.getAll();
+      // Call directly without company_id param to get ALL users
+      const response = await axiosInstance.get('/users/', {
+        params: { company_id: null }
+      });
       const data = response.data;
       setUsers(Array.isArray(data) ? data : data.results ?? []);
     } catch (error) {
@@ -47,7 +50,7 @@ export function PlatformUsers() {
       <div className="card">
         <div style={{ padding: "14px 16px", borderBottom: "1px solid #f8eef5" }}>
           <div className="search-wrap" style={{ maxWidth: 260 }}>
-            <span className="search-icon"><Search size={15} /></span>
+            <span className="search-icon"><FiSearch /></span>
             <input
               className="search-input"
               placeholder="Search users or company…"
@@ -80,16 +83,13 @@ export function PlatformUsers() {
                 <tr key={u.id}>
                   <td>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                      <div className="avatar"
-                        style={{
-                          background: u.role === "super_admin" ? '#a82d68' :
-                            u.role === "admin" ? '#c9407f' : '#a87c9e'
-                        }}>
+                      <div className="avatar" style={{
+                        background: u.role === 'super_admin' ? '#a82d68' :
+                          u.role === 'admin' ? '#c9407f' : '#a87c9e'
+                      }}>
                         {u.username[0].toUpperCase()}
                       </div>
-                      <div style={{ fontWeight: 500, fontSize: 14 }}>
-                        {u.username}
-                      </div>
+                      <div style={{ fontWeight: 500, fontSize: 14 }}>{u.username}</div>
                     </div>
                   </td>
                   <td style={{ fontSize: 13 }}>{u.phone || "-"}</td>
@@ -103,13 +103,9 @@ export function PlatformUsers() {
                   </td>
                   <td>
                     {u.company_name ? (
-                      <span className="badge badge-pink">
-                        {u.company_name}
-                      </span>
+                      <span className="badge badge-pink">{u.company_name}</span>
                     ) : (
-                      <span style={{ fontSize: 12, color: "#a87c9e" }}>
-                        Platform
-                      </span>
+                      <span style={{ fontSize: 12, color: "#a87c9e" }}>Platform</span>
                     )}
                   </td>
                   <td style={{ fontSize: 13 }}>

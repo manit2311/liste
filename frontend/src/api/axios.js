@@ -16,8 +16,8 @@ axiosInstance.interceptors.request.use((config) => {
     if (raw) {
       const parsed = JSON.parse(raw);
       const selectedCompanyId = parsed?.state?.selectedCompanyId;
-      // Always send company_id if selected — backend handles permission check
-      if (selectedCompanyId) {
+      // Skip adding company_id if the request explicitly set it to null (platform pages)
+      if (selectedCompanyId && config.params?.company_id !== null) {
         config.params = { ...config.params, company_id: selectedCompanyId };
       }
     }
